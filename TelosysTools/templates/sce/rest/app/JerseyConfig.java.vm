@@ -1,0 +1,38 @@
+package org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.rest.ws;
+
+import javax.ws.rs.ApplicationPath;
+
+#foreach($entity in $selectedEntities)
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.rest.ws.resources.${entity.name}Resource;
+#end
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.rest.ws.resources.ClientLogger;
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.rest.ws.resources.Version;
+import org.gobcan.sce.libs.commons.multi.jersey.model.SWSCEResourceConfig;
+import org.gobcan.sce.libs.commons.multi.jersey.model.enums.SCEDomain;
+import org.gobcan.sce.libs.commons.multi.jersey.services.swagger.SCESwaggerConfig;
+import org.springframework.stereotype.Component;
+
+@Component
+@ApplicationPath("api/v1.0")
+public class JerseyConfig extends SWSCEResourceConfig {
+
+    @Override
+    protected void registerResources() {
+        register(ClientLogger.class);
+        register(Version.class);
+#foreach($entity in $selectedEntities)
+        register(${entity.name}Resource.class);
+#end
+    }
+
+    @Override
+    protected SCESwaggerConfig registerSwaggerConfiguration() {
+        SCESwaggerConfig config = new SCESwaggerConfig(SCEDomain.ONLY_EXTERNAL);
+        config.setApiRelativeBasePath("../api/v1.0");
+        config.setResourcesPackage("org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.rest.ws.resources");
+        config.setTitle("sw${NOMBRE_CORTO_PROYECTO_CAPITALIZADO}");
+        config.setApiVersion("1.0");
+        return config;
+    }
+
+}

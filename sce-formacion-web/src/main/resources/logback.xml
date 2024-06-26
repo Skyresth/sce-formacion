@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+<configuration scan="true" scanPeriod="60 seconds">
+
+	<insertFromJNDI env-entry-name="java:comp/env/appName" as="appName" />
+	<contextName>${appName}</contextName>
+
+	<property name="LOGS_HOME" value="${CATALINA_HOME}/logs" />
+
+	<appender name="STDOUT"
+		class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<pattern>%d{yyyy-MM-dd}T%d{HH:mm:ss.SSSZ} [%thread] %level %logger -
+				%msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<appender name="FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${LOGS_HOME}/${CONTEXT_NAME}-app.log</file>
+		<rollingPolicy
+			class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			daily rollover
+			<fileNamePattern>${LOGS_HOME}/${CONTEXT_NAME}-app.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>%d{yyyy-MM-dd}T%d{HH:mm:ss.SSSZ} [%thread] %level %logger -
+				%msg%n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="javax.activation" level="INFO" />
+	<logger name="javax.mail" level="INFO" />
+	<logger name="javax.xml.bind" level="INFO" />
+	<logger name="ch.qos.logback" level="INFO" />
+	<logger name="com.codahale.metrics" level="INFO" />
+	<logger name="com.ryantenney" level="INFO" />
+	<logger name="com.sun" level="INFO" />
+	<logger name="com.zaxxer" level="INFO" />
+	<logger name="net.sf.ehcache" level="INFO" />
+	<logger name="org.apache" level="INFO" />
+	<logger name="org.apache.catalina.startup.DigesterFactory" level="OFF" />
+	<logger name="org.bson" level="INFO" />
+	<logger name="org.hibernate.validator" level="INFO" />
+	<logger name="org.hibernate" level="INFO" />
+	<logger name="org.hibernate.ejb.HibernatePersistence" level="OFF" />
+	<logger name="org.springframework" level="WARN" />
+	<logger name="org.springframework.web" level="WARN" />
+	<logger name="org.springframework.security" level="WARN" />
+	<logger name="org.springframework.cache" level="WARN" />
+	<logger name="org.thymeleaf" level="WARN" />
+	<logger name="org.xnio" level="INFO" />
+	<logger name="springfox" level="INFO" />
+	<logger name="sun.rmi" level="INFO" />
+	<logger name="sun.rmi.transport" level="INFO" />
+
+	<root level="INFO">
+		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
+	</root>
+
+</configuration>

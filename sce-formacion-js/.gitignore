@@ -1,0 +1,33 @@
+# Ignore all dotfiles...
+.*
+ 
+# except for
+!.gitignore
+!.gitattributes
+!.gitkeep
+!.bowerrc
+!.angular-cli.json
+!.editorconfig
+ 
+# Idea
+atlassian-ide-plugin.xml
+*.iml
+ 
+node/
+node.bak/
+node_modules/
+npm-debug.log
+target/
+generated/
+rebel.xml
+ 
+*-local.yml
+ 
+# Bower Directory
+components/
+bower_components/
+
+# Typing #
+/src/typings/tsd/
+/typings/
+/tsd_typings/

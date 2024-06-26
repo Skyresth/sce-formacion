@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<databases defaultId="0" maxId="4">
+<db dialect="org.hibernate.dialect.Oracle10gDialect" driver="oracle.jdbc.driver.OracleDriver" id="0" isolationLevel="" name="ORACLE" poolSize="1" typeName="ORACLE" url="jdbc:oracle:thin:@10.140.66.244:1521:tabaiba">
+<property name="user" value="SCE"/>
+<property name="password" value="SCE_2012"/>
+<metadata catalog="!" schema="sce" table-name-exclude="" table-name-include="" table-name-pattern="SAMPLEAPP_%" table-types="TABLE"/>
+</db>
+<db dialect="org.hibernate.dialect.PostgreSQLDialect" driver="org.postgresql.Driver" id="1" isolationLevel="" name="POSTGRESQL" poolSize="1" typeName="POSTGRESQL" url="jdbc:postgresql://10.140.66.112:5432/sce_sampleapp">
+<property name="user" value="sce_sampleapp"/>
+<property name="password" value="sce_sampleapp2018"/>
+<metadata catalog="!" schema="sce" table-name-exclude="" table-name-include="" table-name-pattern="sampleapp_%" table-types="TABLE"/>
+</db>
+</databases>

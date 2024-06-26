@@ -1,0 +1,23 @@
+#parse("comun.vm")
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { GrowlService, ResponseList } from 'angular-sce-commons';
+import { throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { ${entityNamePascalCaseSingular} } from './${entityNameLowerCaseSingular}';
+import { ${entityNamePascalCaseSingular}Service } from './${entityNameLowerCaseSingular}.service';
+
+@Injectable()
+export class ${entityNamePascalCaseSingular}ListResolver implements Resolve<ResponseList<${entityNamePascalCaseSingular}>> {
+  constructor(private ${entityNameCamelCaseSingular}Service: ${entityNamePascalCaseSingular}Service, private growlService: GrowlService) {}
+
+  resolve(route: ActivatedRouteSnapshot) {
+    return this.${entityNameCamelCaseSingular}Service.query().pipe(
+      catchError(error => {
+        this.growlService.showError('Error', error);
+        return throwError(error);
+      }),
+    );
+  }
+}

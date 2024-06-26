@@ -1,0 +1,146 @@
+<form name="form" class="form-horizontal" (ngSubmit)="save()" [formGroup]="alumnoForm">
+  <div class="box">
+    <div class="form-row">
+      <h4 class="box-title">Acciones</h4>
+    </div>
+    <p-toolbar>
+      <div class="ui-toolbar-group-left">
+        <button type="button" class="btn btn-light has-icon" (click)="goBack()">
+          <i class="fa fa-arrow-left"></i>
+          Volver
+        </button>
+        <button type="submit" class="btn btn-primary has-icon"
+          [disabled]="alumnoForm.pristine || alumnoForm.invalid">
+          <i class="fa fa-check"></i>
+          Guardar
+        </button>
+      </div>
+      <div class="ui-toolbar-group-right">
+        <button type="button" class="btn btn-danger has-icon" (click)="delete()" *ngIf="model.idAlumno">
+          <i class="fa fa-trash"></i>
+          Eliminar
+        </button>
+      </div>
+    </p-toolbar>
+    <div class="form-row">
+      <div class="col-md-12">
+        <div *ngIf="alumnoForm.dirty && alumnoForm.invalid" class="alert alert-danger" role="alert">Existen errores de validación</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="row">
+      <div class="col-12">
+        <p-tabView (onChange)="handleTabChange($event)">
+          <p-tabPanel header="Detalles" [selected]="currentTab === 0">
+            <fieldset>
+              <div class="form-row">
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': alumnoForm.controls.nombre.invalid}">
+                    <label for="nombre" class="col-md-3 ">Nombre</label>
+                    <div class="col-md-9">
+                      <input type="text" class="form-control" id="nombre" formControlName="nombre" required>
+                      <div *ngIf="formErrors.nombre.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.nombre"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': alumnoForm.controls.apellido1.invalid}">
+                    <label for="apellido1" class="col-md-3 ">Apellido1</label>
+                    <div class="col-md-9">
+                      <input type="text" class="form-control" id="apellido1" formControlName="apellido1" required>
+                      <div *ngIf="formErrors.apellido1.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.apellido1"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': alumnoForm.controls.apellido2.invalid}">
+                    <label for="apellido2" class="col-md-3 ">Apellido2</label>
+                    <div class="col-md-9">
+                      <input type="text" class="form-control" id="apellido2" formControlName="apellido2">
+                      <div *ngIf="formErrors.apellido2.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.apellido2"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': alumnoForm.controls.idTipoDocumento.invalid}">
+                    <label for="idTipoDocumento" class="col-md-3 ">Tipo documento</label>
+                    <div class="col-md-9">
+                      <p-dropdown [options]="selectItemsTiposDocumento" formControlName="idTipoDocumento"></p-dropdown>
+                      <div *ngIf="formErrors.idTipoDocumento.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.idTipoDocumento"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': alumnoForm.controls.numeroDocumento.invalid}">
+                    <label for="numeroDocumento" class="col-md-3 ">Numero documento</label>
+                    <div class="col-md-9">
+                      <input type="text" class="form-control" id="numeroDocumento" formControlName="numeroDocumento"
+                        required>
+                      <div *ngIf="formErrors.numeroDocumento.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.numeroDocumento"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': alumnoForm.controls.fechaNacimiento.invalid}">
+                    <label for="fechaNacimiento" class="col-md-3 ">Fecha nacimiento</label>
+                    <div class="col-md-9">
+                      <p-calendar [locale]="calendarLocale.es" dateFormat="dd/mm/yy" inputStyleClass="form-control"
+                        id="fechaNacimiento" formControlName="fechaNacimiento" required></p-calendar>
+                      <div *ngIf="formErrors.fechaNacimiento.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.fechaNacimiento"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': alumnoForm.controls.observaciones.invalid}">
+                    <label for="observaciones" class="col-md-3 ">Observaciones</label>
+                    <div class="col-md-9">
+                      <textarea class="form-control" id="observaciones" formControlName="observaciones"></textarea>
+                      <div *ngIf="formErrors.observaciones.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.observaciones"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </p-tabPanel>
+          <p-tabPanel *ngIf="model.idAlumno" header="Cursos" [selected]="currentTab === 1">
+            <app-curso-table #unlinkedCursos [expandFilters]="false" [clickAction]="goToDetailCurso"
+              [primaryButtonAction]="linkCurso" primaryButtonText="Vincular" primaryButtonClass="plus"
+              [fixedFilters]="unlinkedCursosFilters" [rememberFilters]="false" title="No vinculados"></app-curso-table>
+            <app-curso-table #linkedCursos [expandFilters]="false" [add]="addCurso" [clickAction]="goToDetailCurso"
+              [primaryButtonAction]="unlinkCurso" primaryButtonText="Desvincular" primaryButtonClass="minus"
+              [fixedFilters]="linkedCursosFilters" [rememberFilters]="false" title="Vinculados"></app-curso-table>
+          </p-tabPanel>
+        </p-tabView>
+      </div>
+    </div>
+  </div>
+</form>

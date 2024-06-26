@@ -1,0 +1,127 @@
+#parse("comun.vm")
+#macro(createRow $attributeIndex)
+#if ($attributeIndex % 2 == 0)
+#if ($attributeIndex != 0)
+        </div>
+#end## if
+        <div class="row">
+#end## if
+#end
+<div class="row">
+  <h3 class="box-title">{{ name }}</h3>
+
+  <div class="box-top-actions" *ngIf="add">
+    <a class="btn btn-success has-icon" (click)="add${entityNamePascalCaseSingular}()">
+      <i class="fa fa-plus"></i>
+      Añadir
+    </a>
+  </div>
+</div>
+
+<p-accordion>
+  <p-accordionTab header="Filtros de Búsqueda" [selected]="expandFilters">
+    <form name="form" class="form-horizontal">
+      <fieldset>
+#set($attributeIndex = 0)
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if ($attribute.isUsedInForeignKey())
+#*      *##foreach($link in $entity.selectedLinks)
+#*           *##if ($link.isCardinalityManyToOne())
+#*                *##set($originAttributeName = ${link.attributes.get(0).originAttribute.name})
+#*                *##if ($originAttributeName == ${attribute.name})
+#*                     *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*                     *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*                     *##set($targetEntityLabel = ${sceVelocityTools.getLabelFromName($link.fieldName)})
+#*                     *##createRow($attributeIndex)
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label for="${link.fieldName}" class="col-sm-2 control-label">${targetEntityLabel}</label>
+              <div class="col-md-10">
+                <p-dropdown name="${targetEntityNameCamelCasePlural}" [options]="selectItems${targetEntityNamePascalCasePlural}" [(ngModel)]="filters.${originAttributeName}.value" [autoWidth]="false" [disabled]="getFilterDisabledStatus(fixedFilters.${originAttributeName})"></p-dropdown>
+              </div>
+            </div>
+          </div>
+#*                     *##set($attributeIndex = $attributeIndex + 1)
+#*                *##end
+#*           *##end## if
+#*      *##end## foreach
+#* *##elseif (${attribute.name} != 'version')
+#*      *##createRow($attributeIndex)
+          <div class="col-sm-6">
+            <div class="form-group">
+              <label for="codigo" class="col-sm-2 control-label">${attribute.label}</label>
+              <div class="col-md-10">
+#*      *##if ($attribute.type == 'Date')
+                <p-calendar [locale]="calendarLocale.es" dateFormat="dd/mm/yy" inputStyleClass="form-control" id="${attribute.name}" name="${attribute.name}" [(ngModel)]="filters.${attribute.name}.value" [disabled]="getFilterDisabledStatus(fixedFilters.${attribute.name})"></p-calendar>
+#*      *##else
+                <input type="text" class="form-control" id="${attribute.name}" name="${attribute.name}" [(ngModel)]="filters.${attribute.name}.value" [disabled]="getFilterDisabledStatus(fixedFilters.${attribute.name})">
+#*      *##end
+              </div>
+            </div>
+          </div>
+#*      *##set($attributeIndex = $attributeIndex + 1)
+#* *##end## if-else
+#end## foreach
+#if ($attributeIndex == 0)
+        <div>
+#end
+        </div>
+        <div class="form-row">
+          <div class="col-12 text-right">
+            <button type="button" class="btn btn-danger has-icon" (click)="clearSearch(); tt.reset()">
+              <i class="fa fa-close"></i>
+              Limpiar filtro
+            </button>
+            <button type="submit" class="btn btn-primary has-icon" (click)="tt.reset()" [disabled]="searching">
+              <i class="fa" [ngClass]="{'fa-spinner fa-spin': searching, 'fa-search': !searching}"></i>
+              Buscar
+            </button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </p-accordionTab>
+</p-accordion>
+
+<div class="form-row mt-5 mt-lg-3">
+  <h3 class="box-title" *ngIf="showResultsLabel">Resultados</h3>
+
+  <div class="data-table-container data-table-clickable">
+    <p-table #tt [value]="tableValue"
+      [paginator]="true" [pageLinks]="3" [rowsPerPageOptions]="rowsPerPageOptions"
+      [first]="tableStatus.first" [rows]="tableStatus.rows" [totalRecords]="totalRecords"
+      [sortField]="tableStatus.sortField" [sortOrder]="tableStatus.sortOrder"
+      [lazy]="true" (onLazyLoad)="loadData(${D}event)" [loading]="searching"
+      [responsive]="true">
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngFor="let col of cols" [pSortableColumn]="col.field">
+            {{col.header}}
+            <p-sortIcon [field]="col.field"></p-sortIcon>
+          </th>
+          <th *ngIf="primaryButtonAction">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <ng-container *ngFor="let col of cols">
+            <td (click)="clickAction(row)" *ngIf="col.link">{{ row[col.field][col.link] }}</td>
+            <td (click)="clickAction(row)" *ngIf="col.date">{{ row[col.field] | date:'dd/MM/yyyy' }}</td>
+            <td (click)="clickAction(row)" *ngIf="!col.link && !col.date">{{ row[col.field] }}</td>
+          </ng-container>
+          <td *ngIf="primaryButtonAction">
+            <button type="button" class="btn btn-xs btn-primary has-icon" (click)="primaryButtonAction(row)">
+              <i class="fa fa-{{ primaryButtonClass }}"></i>
+              {{ primaryButtonText }}
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="primaryButtonAction ? cols.length + 1 : cols.length">No records found</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

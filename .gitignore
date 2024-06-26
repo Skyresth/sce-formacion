@@ -1,0 +1,17 @@
+# Ignore all dotfiles...
+.*
+ 
+# except for .gitignore and .gitattributes
+!.gitignore
+!.gitattributes
+!.gitkeep
+ 
+# Idea
+atlassian-ide-plugin.xml
+*.iml
+
+target/
+generated/
+rebel.xml
+ 
+*-local.yml

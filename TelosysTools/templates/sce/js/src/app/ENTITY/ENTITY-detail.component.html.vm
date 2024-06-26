@@ -1,0 +1,152 @@
+#parse("comun.vm")
+#macro(createRow $attributeIndex)
+#if ($attributeIndex % 2 == 0)
+#if ($attributeIndex != 0)
+      </div>
+#end## if
+      <div class="row">
+#end## if
+#end## macro
+#macro(getTargetEntityLinks $targetEntity)
+#foreach($link2 in $targetEntity.selectedLinks)
+#if ($link2.isCardinalityManyToOne())
+#set($targetEntityNamePascalCasePlural2 = $link2.targetEntity.databaseCatalog)
+#set($targetEntityNameCamelCasePlural2 = ${fn.uncapitalize($targetEntityNamePascalCasePlural2)})
+[${targetEntityNameCamelCasePlural2}]="${targetEntityNameCamelCasePlural2}" ##
+#end## if
+#end## foreach 
+#end## macro
+<form name="form" class="form-horizontal" (ngSubmit)="save()" [formGroup]="${entityNameCamelCaseSingular}Form">
+  <div class="box">
+    <div class="row">
+      <h4 class="box-title">Acciones</h4>
+    </div>
+    <p-toolbar>
+      <div class="ui-toolbar-group-left">
+        <button type="button" class="btn btn-default has-icon" (click)="goBack()">
+          <i class="fa fa-arrow-left"></i>
+          Volver
+        </button>
+        <button type="submit" class="btn btn-primary has-icon" [disabled]="${entityNameCamelCaseSingular}Form.pristine || ${entityNameCamelCaseSingular}Form.invalid">
+          <i class="fa fa-check"></i>
+          Guardar
+        </button>
+      </div>
+      <div class="ui-toolbar-group-right">
+        <button type="button" class="btn btn-danger has-icon" (click)="delete()" *ngIf="model.${keyAttribute.name}">
+          <i class="fa fa-trash"></i>
+          Eliminar
+        </button>
+      </div>
+    </p-toolbar>
+    <div class="row">
+      <div class="col-sm-12">
+        <div *ngIf="${entityNameCamelCaseSingular}Form.dirty && ${entityNameCamelCaseSingular}Form.invalid" class="alert alert-danger" role="alert">Existen errores de validación</div>
+      </div>
+    </div>
+  </div>
+
+#set($targetEntityGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*      *##set($targetEntityGenerated = true)
+#* *##end
+#end
+#if ($targetEntityGenerated)
+  <div class="box">
+  <div class="row">
+  <div class="col-12">
+  <p-tabView (onChange)="handleTabChange(${D}event)">
+  <p-tabPanel header="Detalles" [selected]="currentTab === 0">
+#else
+  <div class="box">
+#end
+    <fieldset>
+#set($attributeIndex = 0)
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if ($attribute.isUsedInForeignKey())
+#*      *##foreach($link in $entity.selectedLinks)
+#*           *##if ($link.isCardinalityManyToOne())
+#*                *##set($originAttributeName = ${link.attributes.get(0).originAttribute.name})
+#*                *##if ($originAttributeName == ${attribute.name})
+#*                     *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*                     *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*                     *##set($targetEntityLabel = ${sceVelocityTools.getLabelFromName($link.fieldName)})
+#*                     *##createRow($attributeIndex)
+        <div class="col-sm-6">
+          <div class="form-group" [ngClass]="{'has-error': ${entityNameCamelCaseSingular}Form.controls.${originAttributeName}.invalid}">
+            <label for="${originAttributeName}" class="col-sm-3 control-label">${targetEntityLabel}</label>
+            <div class="col-sm-9">
+              <p-dropdown [options]="selectItems${targetEntityNamePascalCasePlural}" formControlName="${originAttributeName}" [autoWidth]="false"></p-dropdown>
+              <div *ngIf="formErrors.${originAttributeName}.length" class="alert alert-danger">
+                <span class="clearfix" *ngFor="let error of formErrors.${originAttributeName}"><i class="fa fa-times-circle"></i> {{ error }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+#*                     *##set($attributeIndex = $attributeIndex + 1)
+#*                *##end
+#*           *##end## if
+#*      *##end## foreach
+#* *##elseif (${attribute.name} != 'version')
+#*      *##createRow($attributeIndex)
+        <div class="col-sm-6">
+          <div class="form-group" [ngClass]="{'has-error': ${entityNameCamelCaseSingular}Form.controls.${attribute.name}.invalid}">
+            <label for="${attribute.name}" class="col-sm-3 control-label">${attribute.label}</label>
+            <div class="col-sm-9">
+              <#*
+#*      *##if ($attribute.type == 'Date')
+p-calendar [locale]="calendarLocale.es" dateFormat="dd/mm/yy" inputStyleClass#*
+#*      *##elseif ($attribute.isLongText())
+textarea class#*
+#*      *##elseif ($attribute.type == 'Integer' || $attribute.type == 'Long')
+input type="number" class#*
+#*      *##else
+input type="text" class#*
+#*      *##end
+="form-control" id="${attribute.name}" formControlName="${attribute.name}"#*
+#*      *##if (${attribute.isNotNull()}) required#end#*
+*#>#*
+#*      *##if ($attribute.type == 'Date')
+</p-calendar>#*
+#*      *##elseif ($attribute.isLongText())
+</textarea>#*
+#*      *##end
+
+              <div *ngIf="formErrors.${attribute.name}.length" class="alert alert-danger">
+                <span class="clearfix" *ngFor="let error of formErrors.${attribute.name}"><i class="fa fa-times-circle"></i> {{ error }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+#*      *##set($attributeIndex = $attributeIndex + 1)
+#* *##end
+#end
+#if ($attributeIndex == 0)
+      <div>
+#end
+      </div>
+    </fieldset>
+#if ($targetEntityGenerated)
+  </p-tabPanel>
+#* *##set($tabIndex = 1)
+#* *##foreach($link in $entity.selectedLinks)
+#*      *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*           *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*           *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*           *##set($targetEntityNameCamelCaseSingular = ${fn.uncapitalize($targetEntityNamePascalCaseSingular)})
+  <p-tabPanel *ngIf="model.${keyAttribute.name}" header="${targetEntityNamePascalCasePlural}" [selected]="currentTab === ${tabIndex}">
+    <app-${targetEntityNameCamelCaseSingular}-table #unlinked${targetEntityNamePascalCasePlural} #getTargetEntityLinks($link.targetEntity)[expandFilters]="false" [clickAction]="goToDetail${targetEntityNamePascalCaseSingular}" [primaryButtonAction]="link${targetEntityNamePascalCaseSingular}" primaryButtonText="Vincular" primaryButtonClass="plus" [fixedFilters]="unlinked${targetEntityNamePascalCasePlural}Filters" [rememberFilters]="false" title="No vinculados"></app-${targetEntityNameCamelCaseSingular}-table>
+    <app-${targetEntityNameCamelCaseSingular}-table #linked${targetEntityNamePascalCasePlural} #getTargetEntityLinks($link.targetEntity)[expandFilters]="false" [add]="add${targetEntityNamePascalCaseSingular}" [clickAction]="goToDetail${targetEntityNamePascalCaseSingular}" [primaryButtonAction]="unlink${targetEntityNamePascalCaseSingular}" primaryButtonText="Desvincular" primaryButtonClass="minus" [fixedFilters]="linked${targetEntityNamePascalCasePlural}Filters" [rememberFilters]="false" title="Vinculados"></app-${targetEntityNameCamelCaseSingular}-table>
+  </p-tabPanel>
+#*           *##set($tabIndex = $tabIndex + 1)
+#*      *##end
+#* *##end
+  </div>
+  </p-tabView>
+#else
+  </div>
+  </div>
+  </div>
+#end
+</form>

@@ -1,0 +1,68 @@
+<form name="form" class="form-horizontal" (ngSubmit)="save()" [formGroup]="tipoDocumentoForm">
+  <div class="box">
+    <div class="form-row">
+      <h4 class="box-title">Acciones</h4>
+    </div>
+    <p-toolbar>
+      <div class="ui-toolbar-group-left">
+        <button type="button" class="btn  btn-default has-icon" (click)="goBack()">
+          <i class="fa fa-arrow-left"></i>
+          Volver
+        </button>
+        <button type="submit" class="btn  btn-primary has-icon"
+          [disabled]="tipoDocumentoForm.pristine || tipoDocumentoForm.invalid">
+          <i class="fa fa-check"></i>
+          Guardar
+        </button>
+      </div>
+      <div class="ui-toolbar-group-right">
+        <button type="button" class="btn  btn-danger has-icon" (click)="delete()" *ngIf="model.idTipoDocumento">
+          <i class="fa fa-trash"></i>
+          Eliminar
+        </button>
+      </div>
+    </p-toolbar>
+    <div class="form-row">
+      <div class="col-md-12">
+        <div *ngIf="tipoDocumentoForm.dirty && tipoDocumentoForm.invalid" class="alert alert-danger" role="alert">Existen errores de validación</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="box">
+    <div class="row">
+      <div class="col-12">
+        <p-tabView (onChange)="handleTabChange($event)">
+          <p-tabPanel header="Detalles" [selected]="currentTab === 0">
+            <fieldset>
+              <div class="form-row">
+                <div class="col-md-6">
+                  <div class="form-group" [ngClass]="{'was-validated': tipoDocumentoForm.controls.descripcion.invalid}">
+                    <label for="descripcion" class="col-md-3">Descripcion</label>
+                    <div class="col-md-9">
+                      <input type="text" class="form-control" id="descripcion" formControlName="descripcion" required>
+                      <div *ngIf="formErrors.descripcion.length" class="alert alert-danger">
+                        <span class="clearfix" *ngFor="let error of formErrors.descripcion"><i
+                            class="fa fa-times-circle"></i> {{ error }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </fieldset>
+          </p-tabPanel>
+          <p-tabPanel *ngIf="model.idTipoDocumento" header="Alumnos" [selected]="currentTab === 1">
+            <app-alumno-table #unlinkedAlumnos [tiposDocumento]="tiposDocumento" [expandFilters]="false"
+              [clickAction]="goToDetailAlumno" [primaryButtonAction]="linkAlumno" primaryButtonText="Vincular"
+              primaryButtonClass="plus" [fixedFilters]="unlinkedAlumnosFilters" [rememberFilters]="false"
+              title="No vinculados"></app-alumno-table>
+            <app-alumno-table #linkedAlumnos [tiposDocumento]="tiposDocumento" [expandFilters]="false" [add]="addAlumno"
+              [clickAction]="goToDetailAlumno" [primaryButtonAction]="unlinkAlumno" primaryButtonText="Desvincular"
+              primaryButtonClass="minus" [fixedFilters]="linkedAlumnosFilters" [rememberFilters]="false"
+              title="Vinculados"></app-alumno-table>
+          </p-tabPanel>
+        </p-tabView>
+      </div>
+    </div>
+  </div>
+</form>

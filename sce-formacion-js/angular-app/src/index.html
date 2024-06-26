@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <base href="/" th:href="${contextPath}" />
+  <meta charset="utf-8" />
+  <meta name="appVersion" content="appVersion" th:content="${appVersion}" />
+  <meta name="buildDate" content="buildDate" th:content="${buildDate}" />
+  <meta name="env" content="environment" th:content="${environment}" />
+  <meta name="swAuthPath" content="swAuthPath" th:content="${swAuthPath}" />
+  <meta name="basePathForExternalServices" content="basePathForExternalServices" th:content="${basePathForExternalServices}" />
+  <title>FORMACION Project</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+</head>
+<body>
+  <script th:inline="javascript">
+  /*<![CDATA[*/
+    window.CONFIGURACION = {};
+    window.CONFIGURACION.path = /*[[${contextPath}]]*/ '/';
+    window.CONFIGURACION.env = /*[[${environment}]]*/ 'DESA';
+    window.CONFIGURACION.basePathForExternalServices = /*[[${basePathForExternalServices}]]*/ '/';
+    window.CONFIGURACION.swAuthPath = /*[[${swAuthPath}]]*/ null;
+    window.CONFIGURACION.autoServeProperties = /*[[${autoServeProperties}]]*/ '{}';
+    window.CONFIGURACION.debugInfo = /*[[${debugInfo}]]*/ '{}';
+  /*]]>*/
+  </script>
+
+  <app-root><h1 id="splash">Cargando...</h1></app-root>
+</body>
+</html>

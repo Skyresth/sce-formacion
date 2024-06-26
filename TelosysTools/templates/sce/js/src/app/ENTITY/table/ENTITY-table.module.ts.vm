@@ -1,0 +1,13 @@
+#parse("comun.vm")
+import { NgModule } from '@angular/core';
+
+import { SharedModule } from '../../shared';
+
+import { ${entityNamePascalCaseSingular}TableComponent } from './${entityNameLowerCaseSingular}-table.component';
+
+@NgModule({
+  imports: [SharedModule],
+  exports: [${entityNamePascalCaseSingular}TableComponent],
+  declarations: [${entityNamePascalCaseSingular}TableComponent]
+})
+export class ${entityNamePascalCaseSingular}TableModule {}

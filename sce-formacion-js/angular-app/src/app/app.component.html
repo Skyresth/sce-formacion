@@ -1,0 +1,11 @@
+<sce-header [title]="appTitle" [sispecanEnv]="sispecanEnv" *ngIf="showHeader"></sce-header>
+<sce-nav [menuItems]="menuItems"></sce-nav>
+
+<article id="content">
+  <router-outlet></router-outlet>
+  <sce-debug></sce-debug>
+</article>
+
+<sce-growl></sce-growl>
+<sce-confirm></sce-confirm>
+<sce-loading-bar></sce-loading-bar>

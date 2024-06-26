@@ -1,0 +1,77 @@
+#parse("comun.vm")
+package org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.core.services;
+
+#foreach( $import in $java.imports($entity.keyAttributes) )
+import $import;
+#end
+import java.util.List;
+import java.util.Map;
+
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.core.exceptions.${NOMBRE_CORTO_PROYECTO_CAPITALIZADO}CoreException;
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.core.utils.SceBeanUtils;
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.core.utils.SceFilterSpecification;
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.core.utils.ScePageUtils;
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.core.utils.SceRepositoryUtils;
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.data.dto.${entityNamePascalCaseSingular}Dto;
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.data.entities.${entityNamePascalCaseSingular};
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.data.repositories.${entityNamePascalCaseSingular}Repository;
+import org.gobcan.sce.libs.commons.rsql.RestSqlProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.querydsl.core.types.Predicate;
+
+@Service
+public class ${entityNamePascalCaseSingular}Service {
+    @Autowired
+    private ${entityNamePascalCaseSingular}Repository repository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    private SceBeanUtils sceBeanUtils;
+
+    public ${entityNamePascalCaseSingular}Service() {
+        sceBeanUtils = new SceBeanUtils();
+    }
+
+    public Page<${entityNamePascalCaseSingular}Dto> query(String query, int pageIndex, int pageSize, String sortField, int sortOrder) {
+        Pageable pageable = ScePageUtils.createPageable(pageIndex, pageSize, sortField, sortOrder);
+        Predicate predicate = RestSqlProcessor.restSqlToPredicate(${entityNamePascalCaseSingular}.class, query);
+        Page<${entityNamePascalCaseSingular}> ${entityNameCamelCasePlural} = repository.findAll(predicate, pageable);
+        return sceBeanUtils.copyPageProperties(${entityNameCamelCasePlural}, ${entityNamePascalCaseSingular}Dto.class, pageable);
+    }
+
+    public Page<${entityNamePascalCaseSingular}Dto> findAll(Map<String, List<String>> filters, int pageIndex, int pageSize, String sortField, int sortOrder) {
+        Pageable pageable = ScePageUtils.createPageable(pageIndex, pageSize, sortField, sortOrder);
+        Page<${entityNamePascalCaseSingular}> ${entityNameCamelCasePlural} = repository.findAll(SceFilterSpecification.byProperties(${entityNamePascalCaseSingular}.class, filters), pageable);
+        return sceBeanUtils.copyPageProperties(${entityNameCamelCasePlural}, ${entityNamePascalCaseSingular}Dto.class, pageable);
+    }
+
+    public Page<${entityNamePascalCaseSingular}Dto> findAll(Map<String, List<String>> filters) {
+        return findAll(filters, 0, 0, null, 0);
+    }
+
+    public ${entityNamePascalCaseSingular}Dto findOne(${keyAttribute.type} ${keyAttribute.name}) {
+        ${entityNamePascalCaseSingular} ${entityNameCamelCaseSingular} = repository.findOne(${keyAttribute.name});
+        return sceBeanUtils.copyProperties(${entityNameCamelCaseSingular}, ${entityNamePascalCaseSingular}Dto.class);
+    }
+
+    @Transactional
+    public void delete(${keyAttribute.type} ${keyAttribute.name}) {
+        repository.delete(${keyAttribute.name});
+    }
+
+    @Transactional
+    public ${entityNamePascalCaseSingular}Dto save(${entityNamePascalCaseSingular}Dto ${entityNameCamelCaseSingular}Dto) throws ${NOMBRE_CORTO_PROYECTO_CAPITALIZADO}CoreException {
+        ${entityNamePascalCaseSingular} ${entityNameCamelCaseSingular} = sceBeanUtils.dtoToEntity(repository, ${entityNameCamelCaseSingular}Dto, ${entityNameCamelCaseSingular}Dto.get$fn.capitalize($keyAttribute.name)(), ${entityNamePascalCaseSingular}.class);
+        ${entityNameCamelCaseSingular} = SceRepositoryUtils.save(repository, ${entityNameCamelCaseSingular});
+        return sceBeanUtils.copyProperties(${entityNameCamelCaseSingular}, ${entityNamePascalCaseSingular}Dto.class);
+    }
+}

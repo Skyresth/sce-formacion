@@ -1,0 +1,19 @@
+#parse("comun.vm")
+package org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.data.repositories;
+
+#set($importsGenerated = false)
+#foreach( $import in $java.imports($entity.keyAttributes) )
+#* *##set($importsGenerated = true)
+import $import;
+#end
+#if ($importsGenerated)
+
+#end
+import org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.data.entities.${entityNamePascalCaseSingular};
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.querydsl.QueryDslPredicateExecutor;
+import org.springframework.stereotype.Repository;
+
+@Repository
+public interface ${entityNamePascalCaseSingular}Repository extends JpaRepository<${entityNamePascalCaseSingular}, ${keyAttribute.type}>, QueryDslPredicateExecutor<${entityNamePascalCaseSingular}>, JpaSpecificationExecutor<${entityNamePascalCaseSingular}> {}

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.gobcan.sce.apps.form.formacion</groupId>
+		<artifactId>sce-formacion</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>sce-formacion-js</artifactId>
+	<packaging>jar</packaging>
+	<name>sce-formacion :: JS</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+	<build>
+		<resources>
+			<resource>
+				<directory>${basedir}/src/main/resources</directory>
+			</resource>
+			<resource>
+				<directory>${project.build.directory}/META-INF/resources</directory>
+				<targetPath>META-INF/resources</targetPath>
+			</resource>
+		</resources>
+
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+					<skip>true</skip>
+					<skipMain>true</skipMain>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<configuration>
+					<excludeDefaultDirectories>true</excludeDefaultDirectories>
+					<filesets>
+						<fileset>
+							<directory>${project.build.directory}</directory>
+							<includes>
+								<include>**/*</include>
+							</includes>
+							<excludes>
+								<exclude>META-INF/resources/api-ui/</exclude>
+							</excludes>
+							<followSymlinks>false</followSymlinks>
+							<useDefaultExcludes>true</useDefaultExcludes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.gobcan.sce.plugins</groupId>
+				<artifactId>frontend-maven-plugin</artifactId>
+				<version>4.1.1</version>
+				<executions>
+					<execution>
+						<id>api-ui-download</id>
+						<goals>
+							<goal>api-ui-download</goal>
+						</goals>
+						<configuration>
+							<targetDirectory>${project.build.directory}/META-INF/resources</targetDirectory>
+							<version>2.0.2</version>
+							<servicesApiVersion>v1.0</servicesApiVersion>
+						</configuration>
+					</execution>
+					<execution>
+						<id>angular-cli-compile</id>
+						<goals>
+							<goal>angular-cli-compile</goal>
+						</goals>
+						<phase>generate-resources</phase>
+						<configuration>
+							<nodeVersion>12.20.0</nodeVersion>
+							<npmVersion>6.14.8</npmVersion>
+							<srcDirectory>${basedir}/angular-app</srcDirectory>
+							<targetDirectory>${project.build.directory}/META-INF/resources</targetDirectory>
+							<ngExecutable>${basedir}/angular-app/node_modules/@angular/cli/bin/ng</ngExecutable>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											org.gobcan.sce.plugins
+										</groupId>
+										<artifactId>
+											frontend-maven-plugin
+										</artifactId>
+										<versionRange>
+											[4.0.0,)
+										</versionRange>
+										<goals>
+											<goal>api-ui-download</goal>
+											<goal>
+												darde-ui-download
+											</goal>
+											<goal>
+												angular-cli-compile
+											</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+</project>

@@ -1,0 +1,75 @@
+#parse("comun.vm")
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+#set($targetEntityGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityGenerated = true)
+#*      *##break
+#* *##end
+#end
+#if ($targetEntityGenerated)
+import { ResponseList } from 'angular-sce-commons';
+#end
+
+## Entidaded de claves ajenas
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityLowerCaseSingular = ${fn.toLowerCase($targetEntityNamePascalCaseSingular)})
+import { ${link.fieldType} } from '../${targetEntityLowerCaseSingular}';
+#* *##end
+#end
+#if ($targetEntityGenerated)
+
+#end
+@Component({
+  templateUrl: './${entityNameLowerCaseSingular}-list.component.html'
+})
+export class ${entityNamePascalCaseSingular}ListComponent implements OnInit {
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+  ${targetEntityNameCamelCasePlural}: ${targetEntityNamePascalCaseSingular}[];
+#* *##end
+#end
+
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+  ) {}
+
+  ngOnInit() {
+    this.goToDetail = this.goToDetail.bind(this);
+    this.add = this.add.bind(this);
+
+    this.route.data.forEach((response: {
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+        $targetEntityNameCamelCasePlural: ResponseList<${link.fieldType}>,
+#* *##end
+#end
+      }) => {
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+        this.${targetEntityNameCamelCasePlural} = response.${targetEntityNameCamelCasePlural}.data;
+#* *##end
+#end
+      }
+    );
+  }
+
+  goToDetail(rowData: any) {
+    this.router.navigate(['/${entityNameHyphenatedPlural}', rowData.${entity.keyAttributes.get(0).name}]);
+  }
+
+  add() {
+    this.router.navigate(['/${entityNameHyphenatedPlural}', 'new']);
+  }
+}

@@ -1,0 +1,163 @@
+#parse("comun.vm")
+#set($generateOneToMany = false)
+#set($generateManyToOne = false)
+#set($generateManyToMany = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToMany())
+#*      *##set($generateManyToMany = true)
+#* *##elseif ($link.isCardinalityManyToOne())
+#*      *##set($generateManyToOne = true)
+#* *##end
+#end
+package org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.data.entities;
+
+import java.io.Serializable;
+#set($importSource = $entity.attributes)
+#foreach($import in $java.imports($importSource))
+import $import;
+#end
+#if ($generateManyToMany)
+import java.util.List;
+#end
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+#if ($generateManyToMany || $generateManyToOne)
+import javax.persistence.JoinColumn;
+#end
+#if ($generateManyToMany)
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+#end
+#if ($generateManyToOne)
+import javax.persistence.ManyToOne;
+#end
+import javax.persistence.NamedQuery;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Version;
+
+/**
+ * The persistent class for the ${entity.databaseTable} database table.
+ * 
+ */
+@Entity
+@Table(name = "${entity.databaseTable}", schema = "${entity.databaseSchema}")
+@NamedQuery(name = "${entityNamePascalCaseSingular}.findAll", query = "SELECT s FROM ${entityNamePascalCaseSingular} s")
+public class ${entityNamePascalCaseSingular} implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+#if ($entity.keyAttributesCount == 1)
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "${entityNamePascalCaseSingular}Sequence")
+    @SequenceGenerator(name = "${entityNamePascalCaseSingular}Sequence", schema = "${entity.databaseSchema}", sequenceName = "seq_${entity.databaseTable}", allocationSize = 1)
+    @Column(name = "${keyAttribute.databaseName}")
+    private ${keyAttribute.type} ${keyAttribute.name};
+#else
+#* *##foreach ($attribute in $entity.keyAttributes)
+    @Id
+    @Column(name = "${attribute.databaseName}")
+    private ${attribute.type} ${attribute.name};
+#* *##end
+#end
+## Todos los atributos menos los identificadores de claves ajenas y claves primarias
+#foreach ($attribute in $entity.nonKeyAttributes)
+
+    @Column(name = "$attribute.databaseName")
+#* *##set($attributeType = ${attribute.type})
+#* *##if (${attribute.name} == 'version')
+#*      *##set($attributeType = 'int')
+    @Version
+#* *##end
+    private ${attributeType} ${attribute.name};
+#end
+## Entidaded de claves ajenas
+#set($targetEntityGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany())
+#*      *##if ($generateOneToMany)
+## Entity Plural: databaseCatalog = nombre de la entidad en Pascal Case plural
+#*           *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*           *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*           *##set($targetEntityType =  "List<${link.targetEntity.name}>")
+#*           *##set($targetEntityGenerated = true)
+    @OneToMany(mappedBy = "${entityNameCamelCaseSingular}", fetch = FetchType.EAGER)
+    private ${targetEntityType} ${targetEntityNameCamelCasePlural};
+#*      *##end
+#* *##elseif ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityGenerated = true)
+
+    @ManyToOne
+    @JoinColumn(name = "${link.joinColumns.get(0).name}", insertable = false, updatable = false)
+    private ${link.fieldType} ${link.fieldName};
+#* *##elseif ($link.isCardinalityManyToMany())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*      *##set($targetKeyAttribute = $link.targetEntity.keyAttributes.get(0))
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patr�n: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*      *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*      *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*      *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+
+    // SONARQUBE:
+    // squid:S1948 - Tenemos que indicar una interfaz (List, Set) obligatoriamente, aunque SonarQube requiera una clase serializable
+    // squid:S1068 - SonarQube cree que "${targetEntityNameCamelCasePlural}" no se usa, pero es necesario
+    @SuppressWarnings({ "squid:S1948", "squid:S1068" })
+    @ManyToMany
+    // @formatter:off
+    @JoinTable(name = "${joinTableName}", schema = "${entity.databaseSchema}",
+        joinColumns = @JoinColumn(name = "${keyAttribute.databaseName}", referencedColumnName = "${keyAttribute.databaseName}"),
+        inverseJoinColumns = @JoinColumn(name = "${targetKeyAttribute.databaseName}", referencedColumnName = "${targetKeyAttribute.databaseName}"))
+    // @formatter:on
+    private List<${link.targetEntity.name}> ${targetEntityNameCamelCasePlural};
+#* *##end
+#end
+## Todos los get/set de atributos que no sean identificadores de claves ajenas
+#foreach($attribute in $entity.attributes)
+#* *##set($attributeType = ${attribute.type})
+#* *##if (${attribute.name} == 'version')
+#*      *##set($attributeType = 'int')
+#* *##end
+
+    public ${attributeType} get${fn.capitalize($attribute.name)}() {
+        return ${attribute.name};
+    }
+
+    public void set${fn.capitalize($attribute.name)}(${attributeType} ${attribute.name}) {
+        this.${attribute.name} = ${attribute.name};
+    }
+#end
+## Entidaded de claves ajenas
+#if ($targetEntityGenerated)
+
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany())
+#*      *##if ($generateOneToMany)
+## Entity Plural: databaseCatalog = nombre de la entidad en Pascal Case plural
+#*           *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*           *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*           *##set($targetEntityType =  "List<${link.targetEntity.name}>")
+    public ${targetEntityType} get${targetEntityNamePascalCasePlural}() {
+        return ${targetEntityNameCamelCasePlural};
+    }
+
+    public void set${targetEntityNamePascalCasePlural}(${targetEntityType} ${targetEntityNameCamelCasePlural}) {
+        this.${targetEntityNameCamelCasePlural} = ${targetEntityNameCamelCasePlural};
+    }
+#*      *##end
+#* *##elseif ($link.isCardinalityManyToOne())
+    public ${link.fieldType} get${fn.capitalize($link.fieldName)}() {
+        return ${link.fieldName};
+    }
+
+    public void set${fn.capitalize($link.fieldName)}(${link.fieldType} ${link.fieldName}) {
+        this.${link.fieldName} = ${link.fieldName};
+    }
+#* *##end
+#end
+}

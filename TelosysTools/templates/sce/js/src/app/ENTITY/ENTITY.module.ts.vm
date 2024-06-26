@@ -1,0 +1,39 @@
+#parse("comun.vm")
+import { NgModule } from '@angular/core';
+
+import { SharedModule } from '../shared';
+
+import { ${entityNamePascalCaseSingular}DetailComponent } from './${entityNameLowerCaseSingular}-detail.component';
+import { ${entityNamePascalCaseSingular}ListComponent } from './${entityNameLowerCaseSingular}-list.component';
+import { ${entityNamePascalCaseSingular}RoutingModule } from './${entityNameLowerCaseSingular}-routing.module';
+import { ${entityNamePascalCaseSingular}TableModule } from './table/${entityNameLowerCaseSingular}-table.module';
+import { ${entityNamePascalCaseSingular}Service } from './${entityNameLowerCaseSingular}.service';
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNameLowerCaseSingular = $fn.toLowerCase($targetEntityNamePascalCaseSingular))
+import { ${targetEntityNamePascalCaseSingular}TableModule } from '../${targetEntityNameLowerCaseSingular}/table/${targetEntityNameLowerCaseSingular}-table.module';
+#* *##end
+#end
+
+@NgModule({
+  imports: [
+    SharedModule,
+    ${entityNamePascalCaseSingular}RoutingModule,
+    ${entityNamePascalCaseSingular}TableModule,
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany()|| $link.isCardinalityManyToMany())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+    ${targetEntityNamePascalCaseSingular}TableModule,
+#* *##end
+#end
+  ],
+  declarations: [
+    ${entityNamePascalCaseSingular}DetailComponent,
+    ${entityNamePascalCaseSingular}ListComponent,
+  ],
+  providers: [
+    ${entityNamePascalCaseSingular}Service,
+  ],
+})
+export class ${entityNamePascalCaseSingular}Module {}

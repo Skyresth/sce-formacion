@@ -1,0 +1,110 @@
+#parse("comun.vm")
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { CanDeactivateGuard } from 'angular-sce-commons';
+
+import { environment } from '../../environments/environment';
+import { authGuard, permissionGuard } from '../app.constants';
+
+import { ${entityNamePascalCaseSingular}DetailComponent } from './${entityNameLowerCaseSingular}-detail.component';
+import { ${entityNamePascalCaseSingular}DetailResolver } from './${entityNameLowerCaseSingular}-detail.resolver';
+import { ${entityNamePascalCaseSingular}ListComponent } from './${entityNameLowerCaseSingular}-list.component';
+import { ${entityNamePascalCaseSingular}ListResolver } from './${entityNameLowerCaseSingular}-list.resolver';
+#set($usedResolvers = [${entityNamePascalCaseSingular}])
+#foreach($link in $entity.selectedLinks)
+#* *##foreach($link2 in $link.targetEntity.selectedLinks)
+#*      *##if ($link2.isCardinalityManyToOne())
+#*           *##set($targetEntityNamePascalCaseSingular2 = ${link2.targetEntity.name})
+#*           *##set($targetEntityNameLowerCaseSingular2 = $fn.toLowerCase($targetEntityNamePascalCaseSingular2))
+#*           *##if (!$usedResolvers.contains($targetEntityNamePascalCaseSingular2))
+#*                *##set($foo = $usedResolvers.add($targetEntityNamePascalCaseSingular2))
+import { ${targetEntityNamePascalCaseSingular2}ListResolver } from '../${targetEntityNameLowerCaseSingular2}/${targetEntityNameLowerCaseSingular2}-list.resolver';
+#*           *##end
+#*      *##end
+#* *##end
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityLowerCaseSingular = ${fn.toLowerCase($targetEntityNamePascalCaseSingular)})
+import { ${targetEntityNamePascalCaseSingular}ListResolver } from '../${targetEntityLowerCaseSingular}/${targetEntityLowerCaseSingular}-list.resolver';
+#* *##end
+#end
+
+export const routes: Routes = [
+  {
+    path: '${entityNameHyphenatedPlural}',
+    canActivateChild: [authGuard, permissionGuard],
+    children: [
+      {
+        path: '',
+        component: ${entityNamePascalCaseSingular}ListComponent,
+        data: {
+          title: '${entityNamePascalCasePlural}',
+          permission: environment.prefijoPermisos + '${entityNamePascalCaseSingular}List',
+        },
+        resolve: {
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+          ${targetEntityNameCamelCasePlural}: ${targetEntityNamePascalCaseSingular}ListResolver,
+#* *##end
+#end
+        },
+      },
+      {
+        path: ':id',
+        component: ${entityNamePascalCaseSingular}DetailComponent,
+        data: {
+          title: '${entityNamePascalCasePlural} - Detalle',
+          permission: environment.prefijoPermisos + '${entityNamePascalCaseSingular}Detail',
+        },
+        resolve: {
+          ${entityNameCamelCaseSingular}: ${entityNamePascalCaseSingular}DetailResolver,
+#set($usedResolvers = [])
+#foreach($link in $entity.selectedLinks)
+#* *##foreach($link2 in $link.targetEntity.selectedLinks)
+#*      *##if ($link2.isCardinalityManyToOne())
+#*           *##set($targetEntityNamePascalCasePlural2 = $link2.targetEntity.databaseCatalog)
+#*           *##set($targetEntityNameCamelCasePlural2 = ${fn.uncapitalize($targetEntityNamePascalCasePlural2)})
+#*           *##set($targetEntityNamePascalCaseSingular2 = ${link2.targetEntity.name})
+#*           *##if (!$usedResolvers.contains($targetEntityNameCamelCasePlural2))
+#*                *##set($foo = $usedResolvers.add($targetEntityNameCamelCasePlural2))
+          ${targetEntityNameCamelCasePlural2}: ${targetEntityNamePascalCaseSingular2}ListResolver,
+#*           *##end
+#*      *##end
+#* *##end
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*      *##if (!$usedResolvers.contains($targetEntityNameCamelCasePlural))
+#*           *##set($foo = $usedResolvers.add($targetEntityNameCamelCasePlural))
+          ${targetEntityNameCamelCasePlural}: ${targetEntityNamePascalCaseSingular}ListResolver,
+#*      *##end
+#* *##end
+#end
+        },
+        canDeactivate: [CanDeactivateGuard],
+      },
+    ],
+  }
+];
+
+@NgModule({
+  imports: [
+    RouterModule.forChild(routes),
+  ],
+  exports: [
+    RouterModule,
+  ],
+  providers: [
+    ${entityNamePascalCaseSingular}DetailResolver,
+    ${entityNamePascalCaseSingular}ListResolver,
+  ],
+})
+export class ${entityNamePascalCaseSingular}RoutingModule {}

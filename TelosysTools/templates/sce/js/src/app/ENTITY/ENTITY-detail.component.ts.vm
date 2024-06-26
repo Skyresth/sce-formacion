@@ -1,0 +1,624 @@
+#parse("comun.vm")
+#set($oneToManyGenerated = false)
+#set($manyToManyGenerated = false)
+#set($targetEntityGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany())
+#*      *##set($oneToManyGenerated = true)
+#* *##elseif ($link.isCardinalityManyToMany())
+#*      *##set($manyToManyGenerated = true)
+#* *##elseif ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityGenerated = true)
+#* *##end
+#end
+import { Location } from '@angular/common';
+import { Component, OnInit##
+#if ($oneToManyGenerated || $manyToManyGenerated)
+, ViewChild##
+#end
+ } from '@angular/core';
+import { FormBuilder, FormGroup##
+#set($validatorNeeded = false)
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if (${attribute.isNotNull()} || $attribute.minLength != '' || $attribute.maxLength != '' || $attribute.pattern != '')
+#*      *##if (${attribute.name} != 'version')
+#*           *##set($validatorNeeded = true)
+#*           *##break
+#*      *##end
+#* *##end
+#end
+#if ($validatorNeeded)
+, Validators##
+#end
+ } from '@angular/forms';
+import { ActivatedRoute##
+#if ($oneToManyGenerated || $manyToManyGenerated || $targetEntityGenerated)
+, Router##
+#end
+ } from '@angular/router';
+#set($dateFound = false)
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if ($attribute.type == 'Date')
+#*      *##set($dateFound = true)
+#*      *##break
+#* *##end
+#end
+#set($secondaryManyToOneGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##foreach($link2 in $link.targetEntity.selectedLinks)
+#*      *##if ($link2.isCardinalityManyToOne())
+#*           *##set($secondaryManyToOneGenerated = true)
+#*      *##end
+#* *##end
+#end
+import {
+#if ($dateFound)
+  CalendarLocale,
+#end
+  CanComponentDeactivate,
+  ConfirmService,
+#if ($oneToManyGenerated || $manyToManyGenerated)
+  Filters,
+#end
+  FormErrors,
+  FormService,
+  GrowlService,
+#if ($targetEntityGenerated || $oneToManyGenerated || $secondaryManyToOneGenerated)
+  ResponseList,
+#end
+  RouteService,
+#if ($targetEntityGenerated)
+  SelectItemService,
+#end
+  ValidationMessages,
+} from 'angular-sce-commons';
+#if ($targetEntityGenerated)
+import { SelectItem } from 'primeng/primeng';
+#end
+import { first } from 'rxjs/operators';
+
+#if ($oneToManyGenerated || $manyToManyGenerated)
+import { SearchService } from '../core';
+#end
+import { ${entityNamePascalCaseSingular} } from './${entityNameLowerCaseSingular}';
+import { ${entityNamePascalCaseSingular}Service } from './${entityNameLowerCaseSingular}.service';
+## Entidaded de claves ajenas
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityLowerCaseSingular = ${fn.toLowerCase($targetEntityNamePascalCaseSingular)})
+import { ${link.fieldType} } from '../${targetEntityLowerCaseSingular}';
+#* *##end
+#end
+#if ($oneToManyGenerated || $manyToManyGenerated)
+#* *##foreach($link in $entity.selectedLinks)
+#*      *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*           *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*           *##set($targetEntityNameLowerCaseSingular = ${fn.toLowerCase($targetEntityNamePascalCaseSingular)})
+#*           *##if ($link.isCardinalityOneToMany())
+import { ${targetEntityNamePascalCaseSingular} } from '../${targetEntityNameLowerCaseSingular}/${targetEntityNameLowerCaseSingular}';
+import { ${targetEntityNamePascalCaseSingular}Service } from '../${targetEntityNameLowerCaseSingular}/${targetEntityNameLowerCaseSingular}.service';
+#*           *##end
+import { ${targetEntityNamePascalCaseSingular}TableComponent } from '../${targetEntityNameLowerCaseSingular}/table/${targetEntityNameLowerCaseSingular}-table.component';
+#*           *##if ($link.isCardinalityManyToMany())
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patrón: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*                *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*                *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*                *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+## Ahora buscamos la entidad que se usa para realizar la asociación
+#*                *##set ($joinTableEntity = '')
+#*                *##foreach ($currentEntity in $selectedEntities)
+#*                     *##if ($currentEntity.databaseTable == $joinTableName)
+#*                          *##set ($joinTableEntity = $currentEntity)
+#*                          *##break
+#*                     *##end
+#*                *##end
+#*                *##set($joinTableEntityNamePascalCaseSingular = $joinTableEntity.name)
+#*                *##set($joinTableEntityNameCamelCaseSingular = $fn.uncapitalize($joinTableEntityNamePascalCaseSingular))
+#*                *##set($joinTableEntityNameLowerCaseSingular = $fn.toLowerCase($joinTableEntityNamePascalCaseSingular))
+import { $joinTableEntityNamePascalCaseSingular } from '../${joinTableEntityNameLowerCaseSingular}/${joinTableEntityNameLowerCaseSingular}';
+import { ${joinTableEntityNamePascalCaseSingular}Service } from '../${joinTableEntityNameLowerCaseSingular}/${joinTableEntityNameLowerCaseSingular}.service';
+#*           *##end
+#*      *##end## if
+#* *##end## foreach
+#end## if
+#set($usedEntities = [])
+#foreach($link in $entity.selectedLinks)
+#* *##if (!$link.isCardinalityManyToOne())
+#*      *##foreach($link2 in $link.targetEntity.selectedLinks)
+#*           *##if ($link2.isCardinalityManyToOne())
+#*                *##set($targetEntityNamePascalCasePlural2 = $link2.targetEntity.databaseCatalog)
+#*                *##set($targetEntityNameCamelCasePlural2 = ${fn.uncapitalize($targetEntityNamePascalCasePlural2)})
+#*                *##set($targetEntityNamePascalCaseSingular2 = ${link2.targetEntity.name})
+#*                *##set($targetEntityNameLowerCaseSingular2 = ${fn.toLowerCase($targetEntityNamePascalCaseSingular2)})
+#*                *##if ($targetEntityNamePascalCaseSingular2 != $entityNamePascalCaseSingular)
+#*                     *##if (!$usedEntities.contains($targetEntityNamePascalCaseSingular2))
+#*                          *##set($foo = $usedEntities.add($targetEntityNamePascalCaseSingular2))
+import { ${targetEntityNamePascalCaseSingular2} } from '../${targetEntityNameLowerCaseSingular2}/${targetEntityNameLowerCaseSingular2}';
+#*                     *##end
+#*                *##end
+#*           *##end
+#*      *##end
+#* *##end
+#end
+
+@Component({
+  templateUrl: './${entityNameLowerCaseSingular}-detail.component.html'
+})
+export class ${entityNamePascalCaseSingular}DetailComponent implements OnInit, CanComponentDeactivate {
+  model: ${entityNamePascalCaseSingular};
+#set($usedEntities = [])
+#foreach($link in $entity.selectedLinks)
+#* *##if (!$link.isCardinalityManyToOne())
+## Arrays para los combos
+#*      *##foreach($link2 in $link.targetEntity.selectedLinks)
+#*           *##if ($link2.isCardinalityManyToOne())
+#*                *##set($targetEntityNamePascalCasePlural2 = $link2.targetEntity.databaseCatalog)
+#*                *##set($targetEntityNameCamelCasePlural2 = ${fn.uncapitalize($targetEntityNamePascalCasePlural2)})
+#*                *##set($targetEntityNamePascalCaseSingular2 = ${link2.targetEntity.name})
+#*                *##if (!$usedEntities.contains($targetEntityNameCamelCasePlural2))
+#*                     *##set($foo = $usedEntities.add($targetEntityNameCamelCasePlural2))
+  ${targetEntityNameCamelCasePlural2}: ${targetEntityNamePascalCaseSingular2}[];
+#*                *##end
+#*           *##end
+#*      *##end
+#* *##end
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+  @ViewChild('unlinked${targetEntityNamePascalCasePlural}') unlinked${targetEntityNamePascalCasePlural}: ${targetEntityNamePascalCaseSingular}TableComponent;
+  @ViewChild('linked${targetEntityNamePascalCasePlural}') linked${targetEntityNamePascalCasePlural}: ${targetEntityNamePascalCaseSingular}TableComponent;
+  unlinked${targetEntityNamePascalCasePlural}Filters: Filters;
+  linked${targetEntityNamePascalCasePlural}Filters: Filters;
+#* *##end
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+  selectItems${targetEntityNamePascalCasePlural}: SelectItem[];
+#* *##end
+#end
+
+  ${entityNameCamelCaseSingular}Form: FormGroup;
+  formErrors: FormErrors = {
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if (${attribute.name} != 'version')
+    '${attribute.name}': [],
+#* *##end
+#end
+  };
+  private validationMessages: ValidationMessages = {
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if (${attribute.name} != 'version')
+    '${attribute.name}': {
+#*      *##if (${attribute.isNotNull()})
+      'required': 'Requerido',
+#*      *##end
+#*      *##if ($attribute.minLength != '')
+      'minlength': 'Longitud mínima: $attribute.minLength caracteres',
+#*      *##end
+#*      *##if ($attribute.maxLength != '')
+      'maxlength': 'Longitud máxima: $attribute.maxLength caracteres',
+#*      *##end
+#*      *##if ($attribute.pattern != '')
+      'pattern': 'Formato incorrecto'
+#*      *##end
+    },
+#* *##end
+#end
+  };
+  private disabledFields: any = {};
+  private forceDeactivate = false;
+
+#if ($oneToManyGenerated || $manyToManyGenerated)
+  currentTab = 0;
+
+#end
+  constructor(
+    private route: ActivatedRoute,
+#if ($oneToManyGenerated || $manyToManyGenerated || $targetEntityGenerated)
+    private router: Router,
+#end
+    private ${entityNameCamelCaseSingular}Service: ${entityNamePascalCaseSingular}Service,
+    private growlService: GrowlService,
+    private fb: FormBuilder,
+    private formService: FormService,
+    private confirmService: ConfirmService,
+    private location: Location,
+    private routeService: RouteService,
+#if ($oneToManyGenerated || $manyToManyGenerated)
+    private searchService: SearchService,
+#end
+#if ($targetEntityGenerated)
+    private selectItemService: SelectItemService,
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNameCamelCaseSingular = ${fn.uncapitalize($targetEntityNamePascalCaseSingular)})
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+    private ${targetEntityNameCamelCaseSingular}Service: ${targetEntityNamePascalCaseSingular}Service,
+#* *##end
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToMany())
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patrón: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*      *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*      *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*      *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+## Ahora buscamos la entidad que se usa para realizar la asociación
+#*      *##set ($joinTableEntity = '')
+#*      *##foreach ($currentEntity in $selectedEntities)
+#*           *##if ($currentEntity.databaseTable == $joinTableName)
+#*                *##set ($joinTableEntity = $currentEntity)
+#*                *##break
+#*           *##end
+#*      *##end
+#*      *##set($joinTableEntityNamePascalCaseSingular = $joinTableEntity.name)
+#*      *##set($joinTableEntityNameCamelCaseSingular = $fn.uncapitalize($joinTableEntityNamePascalCaseSingular))
+    private ${joinTableEntityNameCamelCaseSingular}Service: ${joinTableEntityNamePascalCaseSingular}Service,
+#* *##end
+#end
+#if ($dateFound)
+    public calendarLocale: CalendarLocale
+#end
+  ) {}
+
+  ngOnInit() {
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+    this.link${targetEntityNamePascalCaseSingular} = this.link${targetEntityNamePascalCaseSingular}.bind(this);
+    this.unlink${targetEntityNamePascalCaseSingular} = this.unlink${targetEntityNamePascalCaseSingular}.bind(this);
+    this.goToDetail${targetEntityNamePascalCaseSingular} = this.goToDetail${targetEntityNamePascalCaseSingular}.bind(this);
+    this.add${targetEntityNamePascalCaseSingular} = this.add${targetEntityNamePascalCaseSingular}.bind(this);
+
+#* *##end
+#end
+    this.route.data.forEach((response: {
+#set($targetEntityGenerated = false) 
+        ${entityNameCamelCaseSingular}: ${entityNamePascalCaseSingular},
+#set($usedEntities = [])
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*      *##set($targetEntityGenerated = true)
+#*      *##if (!$usedEntities.contains($targetEntityNameCamelCasePlural))
+#*           *##set($foo = $usedEntities.add($targetEntityNameCamelCasePlural))
+        $targetEntityNameCamelCasePlural: ResponseList<${link.fieldType}>
+#*      *##end
+#* *##end
+#end
+## Arrays de la entidad relacionada
+#foreach($link in $entity.selectedLinks)
+#* *##if (!$link.isCardinalityManyToOne())
+#*      *##foreach($link2 in $link.targetEntity.selectedLinks)
+#*           *##if ($link2.isCardinalityManyToOne())
+#*                *##set($targetEntityNamePascalCasePlural2 = $link2.targetEntity.databaseCatalog)
+#*                *##set($targetEntityNameCamelCasePlural2 = ${fn.uncapitalize($targetEntityNamePascalCasePlural2)})
+#*                *##set($targetEntityNamePascalCaseSingular2 = ${link2.targetEntity.name})
+#*                *##if (!$usedEntities.contains($targetEntityNameCamelCasePlural2))
+#*                     *##set($foo = $usedEntities.add($targetEntityNameCamelCasePlural2))
+        ${targetEntityNameCamelCasePlural2}: ResponseList<${targetEntityNamePascalCaseSingular2}>,
+#*                *##end
+#*           *##end
+#*      *##end
+#* *##end
+#end
+      }) => {
+        this.model = response.${entityNameCamelCaseSingular};
+
+        this.routeService.setRouteParamsToModel(this.route.snapshot, this.model, this.disabledFields);
+        this.buildForm();
+        this.formService.disableFields(this.${entityNameCamelCaseSingular}Form, this.disabledFields);
+
+#if ($oneToManyGenerated || $manyToManyGenerated)
+        this.initTabView(this.model.${keyAttribute.name});
+
+#end
+## Arrays de la entidad relacionada
+#foreach($link in $entity.selectedLinks)
+#* *##if (!$link.isCardinalityManyToOne())
+#*      *##foreach($link2 in $link.targetEntity.selectedLinks)
+#*           *##if ($link2.isCardinalityManyToOne())
+#*                *##set($targetEntityNamePascalCasePlural2 = $link2.targetEntity.databaseCatalog)
+#*                *##set($targetEntityNameCamelCasePlural2 = ${fn.uncapitalize($targetEntityNamePascalCasePlural2)})
+#*                *##set($targetEntityNamePascalCaseSingular2 = ${link2.targetEntity.name})
+        this.${targetEntityNameCamelCasePlural2} = response.${targetEntityNameCamelCasePlural2}.data;
+#*           *##end
+#*      *##end
+#* *##end
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+        this.linked${targetEntityNamePascalCasePlural}Filters = {
+#*      *##if ($link.isCardinalityManyToMany())
+          ${entityNameCamelCasePlural}_${keyAttribute.name}: {
+#*      *##else
+          id${fn.capitalize($link.mappedBy)}: {
+#*      *##end
+            value: this.model.${keyAttribute.name}
+          }
+        };
+        this.unlinked${targetEntityNamePascalCasePlural}Filters = {
+#*      *##if ($link.isCardinalityManyToMany())
+          ${entityNameCamelCasePlural}_${keyAttribute.name}: {
+#*      *##else
+          ${keyAttribute.name}: {
+#*      *##end
+            value: this.model.${keyAttribute.name},
+            not: true
+          }
+        };
+#* *##end
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*      *##set($targetEntityFirstNonKeyStringAttributeName = "#firstNonKeyStringAttributeName($link.targetEntity)")
+#*      *##set($targetEntityKeyAttribute = $link.targetEntity.keyAttributes.get(0))
+        this.selectItems${targetEntityNamePascalCasePlural} = this.selectItemService.toSelectItemArray({
+          items: response.${targetEntityNameCamelCasePlural}.data,
+          labelKey: '${targetEntityFirstNonKeyStringAttributeName}',
+          valueKey: '${targetEntityKeyAttribute.name}',
+        });
+#* *##end
+#end
+      }
+    );
+  }
+
+#if ($oneToManyGenerated || $manyToManyGenerated)
+  private initTabView(${keyAttribute.name}) {
+    const storedStatus = this.getTabViewStatus(${keyAttribute.name});
+    this.currentTab = storedStatus ? storedStatus['currentTab'] : 0;
+    this.setTabViewStatus(this.model.${keyAttribute.name}, null);
+  }
+
+  private getTabViewStatus(${keyAttribute.name}) {
+    return this.searchService.getStoredStatus('${entityNameCamelCasePlural}.' + ${keyAttribute.name});
+  }
+
+  private setTabViewStatus(${keyAttribute.name}, status) {
+    this.searchService.storeStatus('${entityNameCamelCasePlural}.' + ${keyAttribute.name}, status);
+  }
+
+#end
+  private buildForm() {
+    this.${entityNameCamelCaseSingular}Form = this.fb.group({
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if (${attribute.name} != 'version')
+      '${attribute.name}': [#*
+#*      *##if ($attribute.type == 'Date')
+this.model.${attribute.name} ? new Date(this.model.${attribute.name}) : null#*
+#*      *##else
+this.model.${attribute.name}#*
+#*      *##end
+, [
+#*      *##if (${attribute.isNotNull()})
+        Validators.required,
+#*      *##end
+#*      *##if ($attribute.minLength != '')
+        Validators.minLength($attribute.minLength),
+#*      *##end
+#*      *##if ($attribute.maxLength != '')
+        Validators.maxLength($attribute.maxLength),
+#*      *##end
+#*      *##if ($attribute.pattern != '')
+        Validators.pattern('$attribute.pattern')
+#*      *##end
+      ]],
+#* *##end
+#end
+    });
+
+    this.${entityNameCamelCaseSingular}Form.valueChanges
+      .subscribe(data => this.onValueChanged(data));
+  }
+
+  private onValueChanged(data?: any) {
+    if (!this.${entityNameCamelCaseSingular}Form) { return; }
+    const form = this.${entityNameCamelCaseSingular}Form;
+    this.model = Object.assign(this.model, form.value);
+    this.formService.validate(form, this.formErrors, this.validationMessages);
+  }
+#set($handleTabChangeNeeded = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany() || $link.isCardinalityManyToMany())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNameCamelCaseSingular = ${fn.uncapitalize($targetEntityNamePascalCaseSingular)})
+#*      *##set($targetEntityKeyAttribute = $link.targetEntity.keyAttributes.get(0))
+#*      *##set($targetEntityNameHyphenatedPlural = ${sceVelocityTools.pascalCaseToHyphenated($targetEntityNamePascalCasePlural)})
+
+  update${targetEntityNamePascalCasePlural}Tables() {
+    this.unlinked${targetEntityNamePascalCasePlural}.search();
+    this.linked${targetEntityNamePascalCasePlural}.search();
+  }
+
+#*      *##if ($link.isCardinalityOneToMany())
+  edit${targetEntityNamePascalCaseSingular}(${targetEntityNameCamelCaseSingular}: ${targetEntityNamePascalCaseSingular}, ${keyAttribute.name}: number) {
+    ${targetEntityNameCamelCaseSingular}.${keyAttribute.name} = ${keyAttribute.name};
+    this.${targetEntityNameCamelCaseSingular}Service.save(${targetEntityNameCamelCaseSingular}).subscribe(
+      response => {
+        this.update${targetEntityNamePascalCasePlural}Tables();
+        this.growlService.showSuccess('¡Hecho!', 'Acción completada con éxito');
+      },
+      error => this.growlService.showError('Error', error)
+    );
+  }
+
+#*      *##end
+  link${targetEntityNamePascalCaseSingular}(rowData: any) {
+#*      *##if ($link.isCardinalityOneToMany())
+    this.${targetEntityNameCamelCaseSingular}Service.get${targetEntityNamePascalCaseSingular}(rowData.${targetEntityKeyAttribute.name}).subscribe(
+      ${targetEntityNameCamelCaseSingular} => this.edit${targetEntityNamePascalCaseSingular}(${targetEntityNameCamelCaseSingular}, this.model.${keyAttribute.name}),
+      error => this.growlService.showError('Error', error)
+    );
+#*      *##elseif ($link.isCardinalityManyToMany())
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patrón: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*           *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*           *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*           *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+## Ahora buscamos la entidad que se usa para realizar la asociación
+#*           *##set ($joinTableEntity = '')
+#*           *##foreach ($currentEntity in $selectedEntities)
+#*                *##if ($currentEntity.databaseTable == $joinTableName)
+#*                     *##set ($joinTableEntity = $currentEntity)
+#*                     *##break
+#*                *##end
+#*           *##end
+#*           *##set($joinTableEntityNamePascalCaseSingular = $joinTableEntity.name)
+#*           *##set($joinTableEntityNameCamelCaseSingular = $fn.uncapitalize($joinTableEntityNamePascalCaseSingular))
+#*           *##set($joinTableEntityNameLowerCaseSingular = $fn.toLowerCase($joinTableEntityNamePascalCaseSingular))
+#*           *##set($joinTableEntityNamePascalCasePlural = $joinTableEntity.databaseCatalog)
+#*           *##set($joinTableEntityNameCamelCasePlural = ${fn.uncapitalize($joinTableEntityNamePascalCasePlural)})
+    this.${entityNameCamelCaseSingular}Service.save${joinTableEntityNamePascalCaseSingular}(this.model.${keyAttribute.name}, rowData.${link.targetEntity.keyAttributes.get(0).name}).subscribe(
+      response => {
+        this.update${targetEntityNamePascalCasePlural}Tables();
+        this.growlService.showSuccess('¡Hecho!', 'Acción completada con éxito');
+      },
+      error => this.growlService.showError('Error', error)
+    );
+#*      *##end##elseif
+  }
+
+  unlink${targetEntityNamePascalCaseSingular}(rowData: any) {
+#*      *##if ($link.isCardinalityOneToMany())
+    this.${targetEntityNameCamelCaseSingular}Service.get${targetEntityNamePascalCaseSingular}(rowData.${targetEntityKeyAttribute.name}).subscribe(
+      ${targetEntityNameCamelCaseSingular} => this.edit${targetEntityNamePascalCaseSingular}(${targetEntityNameCamelCaseSingular}, null),
+      error => this.growlService.showError('Error', error)
+    );
+#*      *##elseif ($link.isCardinalityManyToMany())
+    this.${entityNameCamelCaseSingular}Service.delete${joinTableEntityNamePascalCaseSingular}(this.model.${keyAttribute.name}, rowData.${link.targetEntity.keyAttributes.get(0).name}).subscribe(
+      response => {
+        this.update${targetEntityNamePascalCasePlural}Tables();
+        this.growlService.showSuccess('¡Hecho!', 'Acción completada con éxito');
+      },
+      error => this.growlService.showError('Error', error)
+    );
+#*      *##end
+  }
+
+  goToDetail${targetEntityNamePascalCaseSingular}(rowData: any) {
+    this.setTabViewStatus(this.model.${keyAttribute.name}, { currentTab: this.currentTab });
+    this.router.navigate(['/${targetEntityNameHyphenatedPlural}', rowData.id${targetEntityNamePascalCaseSingular}]);
+  }
+
+  add${targetEntityNamePascalCaseSingular}() {
+    this.setTabViewStatus(this.model.${keyAttribute.name}, { currentTab: this.currentTab });
+    this.router.navigate(['/${targetEntityNameHyphenatedPlural}', 'new', { ${keyAttribute.name}: this.model.${keyAttribute.name} }]);
+  }
+#*      *##set($handleTabChangeNeeded = true)
+#* *##end
+#end
+#if ($handleTabChangeNeeded)
+
+  handleTabChange(e) {
+    this.currentTab = e.index;
+  }
+#end
+
+  goBack() {
+    this.location.back();
+  }
+
+#if ($manyToManyGenerated)
+#* *##foreach($link in $entity.selectedLinks)
+#*      *##if ($link.isCardinalityManyToMany())
+#*           *##set($targetEntityKeyAttributeName = $link.targetEntity.keyAttributes.get(0).name)
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patrón: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*           *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*           *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*           *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+## Ahora buscamos la entidad que se usa para realizar la asociación
+#*           *##set ($joinTableEntity = '')
+#*           *##foreach ($currentEntity in $selectedEntities)
+#*                *##if ($currentEntity.databaseTable == $joinTableName)
+#*                     *##set ($joinTableEntity = $currentEntity)
+#*                     *##break
+#*                *##end
+#*           *##end
+#*           *##set($joinTableEntityNamePascalCaseSingular = $joinTableEntity.name)
+#*           *##set($joinTableEntityNameCamelCaseSingular = $fn.uncapitalize($joinTableEntityNamePascalCaseSingular))
+#*           *##set($joinTableEntityNameLowerCaseSingular = $fn.toLowerCase($joinTableEntityNamePascalCaseSingular))
+  private create${joinTableEntityNamePascalCaseSingular}(${entityNameCamelCaseSingular}: ${entityNamePascalCaseSingular}) {
+    if (this.disabledFields.${targetEntityKeyAttributeName} !== undefined) {
+      const ${joinTableEntityNameCamelCaseSingular} = new ${joinTableEntityNamePascalCaseSingular}();
+      ${joinTableEntityNameCamelCaseSingular}.${targetEntityKeyAttributeName} = this.disabledFields.${targetEntityKeyAttributeName};
+      ${joinTableEntityNameCamelCaseSingular}.${keyAttribute.name} = ${entityNameCamelCaseSingular}.${keyAttribute.name};
+      this.${joinTableEntityNameCamelCaseSingular}Service.save(${joinTableEntityNameCamelCaseSingular}).subscribe();
+    }
+  }
+
+#*      *##end
+#* *##end
+#end
+  save() {
+    this.${entityNameCamelCaseSingular}Service.save(this.model).subscribe(
+      ${entityNameCamelCaseSingular} => {
+        this.forceDeactivate = true;
+        this.growlService.showSuccess('¡Hecho!', 'Acción completada con éxito');
+#if ($manyToManyGenerated)
+#* *##foreach($link in $entity.selectedLinks)
+#*      *##if ($link.isCardinalityManyToMany())
+#*           *##set($targetEntityKeyAttributeName = $link.targetEntity.keyAttributes.get(0).name)
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patrón: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*           *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*           *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*           *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+## Ahora buscamos la entidad que se usa para realizar la asociación
+#*           *##set ($joinTableEntity = '')
+#*           *##foreach ($currentEntity in $selectedEntities)
+#*                *##if ($currentEntity.databaseTable == $joinTableName)
+#*                     *##set ($joinTableEntity = $currentEntity)
+#*                     *##break
+#*                *##end
+#*           *##end
+#*           *##set($joinTableEntityNamePascalCaseSingular = $joinTableEntity.name)
+#*           *##set($joinTableEntityNameCamelCaseSingular = $fn.uncapitalize($joinTableEntityNamePascalCaseSingular))
+#*           *##set($joinTableEntityNameLowerCaseSingular = $fn.toLowerCase($joinTableEntityNamePascalCaseSingular))
+        this.create${joinTableEntityNamePascalCaseSingular}(${entityNameCamelCaseSingular});
+#*      *##end
+#* *##end
+#end
+        this.goBack();
+      },
+      error => this.growlService.showError('Error', error)
+    );
+  }
+
+  delete() {
+    this.confirmService.confirm('¿Desea eliminar este elemento?').pipe(
+      first(confirm => confirm === true)
+    ).subscribe(
+      () => this.${entityNameCamelCaseSingular}Service.delete(this.model.${keyAttribute.name}).subscribe(
+        ${entityNameCamelCaseSingular} => {
+          this.forceDeactivate = true;
+          this.growlService.showSuccess('¡Hecho!', 'Acción completada con éxito');
+          this.goBack();
+        },
+        error => this.growlService.showError('Error', error)
+      )
+    );
+  }
+
+  canDeactivate() {
+    if (this.forceDeactivate || this.${entityNameCamelCaseSingular}Form.pristine) {
+      return true;
+    }
+
+    return this.confirmService.confirm('¿Desea descartar los cambios?').pipe(first());
+  }
+}

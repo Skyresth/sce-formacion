@@ -1,0 +1,30 @@
+#parse("comun.vm")
+import { Injectable } from '@angular/core';
+import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { GrowlService } from 'angular-sce-commons';
+import { throwError } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+import { ${entityNamePascalCaseSingular} } from './${entityNameLowerCaseSingular}';
+import { ${entityNamePascalCaseSingular}Service } from './${entityNameLowerCaseSingular}.service';
+
+@Injectable()
+export class ${entityNamePascalCaseSingular}DetailResolver implements Resolve<${entityNamePascalCaseSingular}> {
+  constructor(private ${entityNameCamelCaseSingular}Service: ${entityNamePascalCaseSingular}Service, private growlService: GrowlService, private router: Router) {}
+
+  resolve(route: ActivatedRouteSnapshot) {
+    const id = route.params['id'];
+
+    if (id === 'new') {
+      return new ${entityNamePascalCaseSingular}();
+    } else {
+      return this.${entityNameCamelCaseSingular}Service.get${entityNamePascalCaseSingular}(id).pipe(
+        catchError(error => {
+          this.growlService.showError('Error', error);
+          this.router.navigate(['/${entityNameHyphenatedPlural}']);
+          return throwError(error);
+        }),
+      );
+    }
+  }
+}

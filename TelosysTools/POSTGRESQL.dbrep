@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Telosys Database Repository --><root>
+<tableList databaseId="1" databaseName="POSTGRESQL" databaseProductName="PostgreSQL" generation="2018-11-05 14:11:00">
+<table catalog="Alumnos" databaseType="TABLE" javaBean="Alumno" name="sampleapp_alumnos" schema="sce">
+<column dbComment="" dbDefaultValue="" dbName="id_alumno" dbNotNull="true" dbPosition="1" dbPrimaryKey="true" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="idAlumno" javaType="java.lang.Long" jdbcTypeCode="2" label="Id alumno" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="nombre" dbNotNull="true" dbPosition="2" dbSize="2147483647" dbTypeName="varchar" inputType="text" javaName="nombre" javaType="java.lang.String" jdbcTypeCode="12" label="Nombre" maxLength="100" minLength="2" notEmpty="true" notNull="true" pattern="[^0-9*_?]+" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="apellido1" dbNotNull="true" dbPosition="3" dbSize="255" dbTypeName="varchar" inputType="text" javaName="apellido1" javaType="java.lang.String" jdbcTypeCode="12" label="Apellido1" maxLength="100" minLength="2" notEmpty="true" notNull="true" pattern="[^0-9*_?]+" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="apellido2" dbNotNull="false" dbPosition="4" dbSize="255" dbTypeName="varchar" inputType="text" javaName="apellido2" javaType="java.lang.String" jdbcTypeCode="12" label="Apellido2" maxLength="100" notNull="false" pattern="[^0-9*_?]+" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbForeignKey="true" dbName="id_tipo_documento" dbNotNull="false" dbPosition="5" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="idTipoDocumento" javaType="java.lang.Long" jdbcTypeCode="2" label="Id tipo documento" notNull="false" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="numero_documento" dbNotNull="true" dbPosition="6" dbSize="255" dbTypeName="varchar" inputType="text" javaName="numeroDocumento" javaType="java.lang.String" jdbcTypeCode="12" label="Numero documento" maxLength="9" notEmpty="true" notNull="true" selected="true"/>
+<column dateType="D" dbComment="" dbDefaultValue="" dbName="fecha_nacimiento" dbNotNull="true" dbPosition="7" dbSize="29" dbTypeName="timestamp" inputType="date" javaName="fechaNacimiento" javaType="java.util.Date" jdbcTypeCode="93" label="Fecha nacimiento" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="observaciones" dbNotNull="false" dbPosition="8" dbSize="2147483647" dbTypeName="varchar" inputType="text" javaName="observaciones" javaType="java.lang.String" jdbcTypeCode="12" label="Observaciones" longText="true" maxLength="1000" notNull="false" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="version" dbNotNull="true" dbPosition="9" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="version" javaType="java.lang.Long" jdbcTypeCode="2" label="Version" notNull="true" selected="true"/>
+<fk name="sampleapp_alumnos_sampleapp_tipos_documento_fk">
+<fkcol colname="id_tipo_documento" colref="id_tipo_documento" deferrable="7" deleterule="3" sequence="1" tablename="sampleapp_alumnos" tableref="sampleapp_tipos_documento" updaterule="3"/>
+</fk>
+<link cardinality="ManyToMany" cascade="" fetch="DEFAULT" foreignKeyName="" id="LINK_JT_SCE.sampleapp_alumnos_cursos_O" inverseSideOf="LINK_JT_SCE.sampleapp_alumnos_cursos_I" javaName="cursos" javaType="java.util.List" joinTableName="sampleapp_alumnos_cursos" mappedBy="" optional="UNDEFINED" owningSide="true" sourceTableName="sampleapp_alumnos" targetEntity="Curso" targetTableName="sampleapp_cursos" used="true">
+<joinTable name="sampleapp_alumnos_cursos">
+<joinColumns>
+<joinColumn insertable="false" name="id_alumno" nullable="true" referencedColumnName="id_alumno" unique="false" updatable="false"/>
+</joinColumns>
+<inverseJoinColumns>
+<joinColumn insertable="false" name="id_curso" nullable="true" referencedColumnName="id_curso" unique="false" updatable="false"/>
+</inverseJoinColumns>
+</joinTable>
+</link>
+<link cardinality="ManyToOne" cascade="" fetch="DEFAULT" foreignKeyName="sampleapp_alumnos_sampleapp_tipos_documento_fk" id="LINK_FK_sampleapp_alumnos_sampleapp_tipos_documento_fk_O" inverseSideOf="" javaName="tipoDocumento" javaType="TipoDocumento" joinTableName="" mappedBy="" optional="UNDEFINED" owningSide="true" sourceTableName="sampleapp_alumnos" targetEntity="TipoDocumento" targetTableName="sampleapp_tipos_documento" used="true">
+<joinColumns>
+<joinColumn insertable="false" name="id_tipo_documento" nullable="true" referencedColumnName="id_tipo_documento" unique="false" updatable="false"/>
+</joinColumns>
+</link>
+</table>
+<table catalog="AlumnosCursos" databaseType="TABLE" javaBean="AlumnoCurso" name="sampleapp_alumnos_cursos" schema="sce">
+<column dbComment="" dbDefaultValue="" dbName="id_alumno_curso" dbNotNull="true" dbPosition="1" dbPrimaryKey="true" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="idAlumnoCurso" javaType="java.lang.Long" jdbcTypeCode="2" label="Id alumno curso" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbForeignKey="true" dbName="id_alumno" dbNotNull="true" dbPosition="2" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="idAlumno" javaType="java.lang.Long" jdbcTypeCode="2" label="Id alumno" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbForeignKey="true" dbName="id_curso" dbNotNull="true" dbPosition="3" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="idCurso" javaType="java.lang.Long" jdbcTypeCode="2" label="Id curso" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="version" dbNotNull="true" dbPosition="4" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="version" javaType="java.lang.Long" jdbcTypeCode="2" label="Version" notNull="true" selected="true"/>
+<fk name="sampleapp_alumnos_cursos_sampleapp_alumnos_fk">
+<fkcol colname="id_alumno" colref="id_alumno" deferrable="7" deleterule="3" sequence="1" tablename="sampleapp_alumnos_cursos" tableref="sampleapp_alumnos" updaterule="3"/>
+</fk>
+<fk name="sampleapp_alumnos_cursos_sampleapp_cursos_fk">
+<fkcol colname="id_curso" colref="id_curso" deferrable="7" deleterule="3" sequence="1" tablename="sampleapp_alumnos_cursos" tableref="sampleapp_cursos" updaterule="3"/>
+</fk>
+</table>
+<table catalog="Cursos" databaseType="TABLE" javaBean="Curso" name="sampleapp_cursos" schema="sce">
+<column dbComment="" dbDefaultValue="" dbName="id_curso" dbNotNull="true" dbPosition="1" dbPrimaryKey="true" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="idCurso" javaType="java.lang.Long" jdbcTypeCode="2" label="Id curso" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="nombre" dbNotNull="true" dbPosition="2" dbSize="255" dbTypeName="varchar" inputType="text" javaName="nombre" javaType="java.lang.String" jdbcTypeCode="12" label="Nombre" maxLength="100" notEmpty="true" notNull="true" selected="true"/>
+<column dateType="DT" dbComment="" dbDefaultValue="" dbName="fecha_inicio" dbNotNull="false" dbPosition="3" dbSize="29" dbTypeName="timestamp" inputType="" javaName="fechaInicio" javaType="java.util.Date" jdbcTypeCode="93" label="Fecha inicio" notNull="false" selected="true"/>
+<column dateType="DT" dbComment="" dbDefaultValue="" dbName="fecha_fin" dbNotNull="false" dbPosition="4" dbSize="29" dbTypeName="timestamp" inputType="" javaName="fechaFin" javaType="java.util.Date" jdbcTypeCode="93" label="Fecha fin" notNull="false" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="version" dbNotNull="true" dbPosition="5" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="version" javaType="java.lang.Long" jdbcTypeCode="2" label="Version" notNull="true" selected="true"/>
+<link cardinality="ManyToMany" cascade="" fetch="DEFAULT" foreignKeyName="" id="LINK_JT_SCE.sampleapp_alumnos_cursos_I" inverseSideOf="LINK_JT_SCE.sampleapp_alumnos_cursos_O" javaName="alumnos" javaType="java.util.List" joinTableName="sampleapp_alumnos_cursos" mappedBy="cursos" optional="UNDEFINED" owningSide="false" sourceTableName="sampleapp_cursos" targetEntity="Alumno" targetTableName="sampleapp_alumnos" used="true"/>
+</table>
+<table catalog="TiposDocumento" databaseType="TABLE" javaBean="TipoDocumento" name="sampleapp_tipos_documento" schema="sce">
+<column dbComment="" dbDefaultValue="" dbName="id_tipo_documento" dbNotNull="true" dbPosition="1" dbPrimaryKey="true" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="idTipoDocumento" javaType="java.lang.Long" jdbcTypeCode="2" label="Id tipo documento" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="descripcion" dbNotNull="true" dbPosition="2" dbSize="255" dbTypeName="varchar" inputType="text" javaName="descripcion" javaType="java.lang.String" jdbcTypeCode="12" label="Descripcion" maxLength="100" notEmpty="true" notNull="true" selected="true"/>
+<column dbComment="" dbDefaultValue="" dbName="version" dbNotNull="true" dbPosition="3" dbSize="131089" dbTypeName="numeric" inputType="number" javaName="version" javaType="java.lang.Long" jdbcTypeCode="2" label="Version" notNull="true" selected="true"/>
+<link cardinality="OneToMany" cascade="" fetch="DEFAULT" foreignKeyName="sampleapp_alumnos_sampleapp_tipos_documento_fk" id="LINK_FK_sampleapp_alumnos_sampleapp_tipos_documento_fk_I" inverseSideOf="LINK_FK_sampleapp_alumnos_sampleapp_tipos_documento_fk_O" javaName="alumnos" javaType="java.util.List" joinTableName="" mappedBy="tipoDocumento" optional="UNDEFINED" owningSide="false" sourceTableName="sampleapp_tipos_documento" targetEntity="Alumno" targetTableName="sampleapp_alumnos" used="true"/>
+</table>
+</tableList>
+</root>

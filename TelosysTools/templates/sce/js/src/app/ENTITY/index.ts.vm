@@ -1,0 +1,9 @@
+#parse("comun.vm")
+export * from './${entityNameLowerCaseSingular}';
+export * from './${entityNameLowerCaseSingular}-detail.component';
+export * from './${entityNameLowerCaseSingular}-detail.resolver';
+export * from './${entityNameLowerCaseSingular}-list.component';
+export * from './${entityNameLowerCaseSingular}-list.resolver';
+export * from './${entityNameLowerCaseSingular}-routing.module';
+export * from './${entityNameLowerCaseSingular}.module';
+export * from './${entityNameLowerCaseSingular}.service';

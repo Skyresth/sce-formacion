@@ -1,0 +1,276 @@
+#parse("comun.vm")
+#set($manyToManyGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToMany())
+#*      *##set($manyToManyGenerated = true)
+#* *##end
+#end
+#set($isSelectItemNeeded = false)
+#foreach ($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($isSelectItemNeeded = true)
+#* *##end
+#end
+import { Component, Input, OnDestroy, OnInit, ViewChild } from '@angular/core';
+#set($dateFound = false)
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if ($attribute.type == 'Date')
+#*      *##set($dateFound = true)
+#*      *##break
+#* *##end
+#end
+import {
+#if ($dateFound)
+  CalendarLocale,
+#end
+  Filters,
+  FilterService,
+  GrowlService,
+  Pageable,
+#if ($isSelectItemNeeded)
+  SelectItemService,
+#end
+} from 'angular-sce-commons';
+import {
+  LazyLoadEvent,
+#if ($isSelectItemNeeded)
+  SelectItem,
+#end
+} from 'primeng/api';
+import { Table } from 'primeng/table';
+
+import { environment } from '../../../environments/environment';
+import { SearchService } from '../../core';
+
+import { ${entityNamePascalCaseSingular} } from '../${entityNameLowerCaseSingular}';
+import { ${entityNamePascalCaseSingular}Service } from '../${entityNameLowerCaseSingular}.service';
+#foreach ($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNameLowerCaseSingular = ${fn.toLowerCase($targetEntityNamePascalCaseSingular)})
+import { ${targetEntityNamePascalCaseSingular} } from '../../${targetEntityNameLowerCaseSingular}';
+#* *##end
+#end
+
+@Component({
+  selector: 'app-${entityNameLowerCaseSingular}-table',
+  templateUrl: './${entityNameLowerCaseSingular}-table.component.html'
+})
+export class ${entityNamePascalCaseSingular}TableComponent implements OnInit, OnDestroy {
+#foreach ($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+  @Input() ${targetEntityNameCamelCasePlural}: ${targetEntityNamePascalCaseSingular}[];
+
+#* *##end
+#end
+  @Input() clickAction: Function;
+
+  @Input() primaryButtonAction: Function;
+
+  @Input() primaryButtonText: string;
+
+  @Input() primaryButtonClass: string;
+
+  @Input() add: Function;
+
+  @Input() expandFilters: boolean;
+
+  @Input() fixedFilters: Filters = {};
+
+  @Input() rememberFilters = true;
+
+  @Input() name: string;
+
+  @Input() showResultsLabel = false;
+
+  @ViewChild('tt', { static: true }) private table: Table;
+
+#foreach ($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+  selectItems${targetEntityNamePascalCasePlural}: SelectItem[];
+#* *##end
+#end
+  filters: Filters;
+  private emptyFilters: Filters = {
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if ($attribute.isUsedInForeignKey())
+#*      *##foreach($link in $entity.selectedLinks)
+#*           *##if ($link.isCardinalityManyToOne())
+#*                *##set($originAttributeName = ${link.attributes.get(0).originAttribute.name})
+#*                *##if ($originAttributeName == ${attribute.name})
+    ${originAttributeName}: {},
+#*                *##end
+#*           *##end## if
+#*      *##end## foreach
+#* *##elseif (${attribute.name} != 'version')
+    ${attribute.name}: {},
+#* *##end## if-else
+#end## foreach
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToMany())
+#*      *##set($originAttributeName = ${link.targetEntity.keyAttributes.get(0).name})
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+    ${targetEntityNameCamelCasePlural}_${originAttributeName}: {},
+#* *##end
+#end
+  };
+
+  cols = [
+#foreach($attribute in $entity.nonKeyAttributes)
+#* *##if ($attribute.isUsedInForeignKey())
+#*      *##foreach($link in $entity.selectedLinks)
+#*           *##if ($link.isCardinalityManyToOne())
+#*                *##set($originAttributeName = ${link.attributes.get(0).originAttribute.name})
+#*                *##if ($originAttributeName == ${attribute.name})
+#*                     *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*                     *##set($targetEntityNameCamelCaseSingular = ${fn.uncapitalize($targetEntityNamePascalCaseSingular)})
+#*                     *##set($targetEntityFirstNonKeyStringAttributeName = "#firstNonKeyStringAttributeName($link.targetEntity)")
+#*                     *##set($targetEntityLabel = ${sceVelocityTools.getLabelFromName($link.fieldName)})
+    { field: '${targetEntityNameCamelCaseSingular}', header: '${targetEntityLabel}', link: '$targetEntityFirstNonKeyStringAttributeName' },
+#*                *##end
+#*           *##end## if
+#*      *##end## foreach
+#* *##elseif ($attribute.type == 'Date')
+    { field: '${attribute.name}', header: '${attribute.label}', date: true },
+#* *##elseif (${attribute.name} != 'version')
+    { field: '${attribute.name}', header: '${attribute.label}' },
+#* *##end
+#end
+  ];
+
+  tableValue: ${entityNamePascalCaseSingular}[];
+  totalRecords: number;
+  rowsPerPageOptions: number[];
+  tableStatus: any;
+
+  searching = false;
+
+  constructor(
+    private ${entityNameCamelCaseSingular}Service: ${entityNamePascalCaseSingular}Service,
+#if ($dateFound)
+    public calendarLocale: CalendarLocale,
+#end
+    private filterService: FilterService,
+    private growlService: GrowlService,
+    private searchService: SearchService,
+#if ($isSelectItemNeeded)
+    private selectItemService: SelectItemService,
+#end
+  ) {}
+
+  ngOnInit() {
+    this.loadData = this.loadData.bind(this);
+
+    this.clearFilters();
+    this.tableStatus = this.getInitialTableStatus();
+    this.rowsPerPageOptions = [environment.rowsPerPage, environment.rowsPerPage * 2, environment.rowsPerPage * 5];
+
+    if (this.rememberFilters) {
+      this.loadSearchStatus();
+    }
+#if ($isSelectItemNeeded)
+
+#end
+#foreach ($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*      *##set($targetEntityFirstNonKeyStringAttributeName = "#firstNonKeyStringAttributeName($link.targetEntity)")
+#*      *##set($targetEntityKeyAttribute = $link.targetEntity.keyAttributes.get(0))
+    this.selectItems${targetEntityNamePascalCasePlural} = this.selectItemService.toSelectItemArray({
+      items: this.${targetEntityNameCamelCasePlural},
+      labelKey: '${targetEntityFirstNonKeyStringAttributeName}',
+      valueKey: '${targetEntityKeyAttribute.name}',
+    }, this.fixedFilters.${targetEntityKeyAttribute.name});
+#* *##end
+#end
+  }
+
+  ngOnDestroy() {
+    if (this.rememberFilters) {
+      this.storeSearchStatus();
+    }
+  }
+
+  clearFilters() {
+    this.filters = this.filterService.getInitialFilters(this.emptyFilters, this.fixedFilters);
+  }
+
+  getFilterDisabledStatus(fixedFilter) {
+    return this.filterService.getFilterDisabledStatus(fixedFilter);
+  }
+
+  search(pageable?: Pageable) {
+    const mergedFilters = this.filterService.getMergedFilters(this.filters, this.fixedFilters);
+    Promise.resolve().then(() => this.searching = true);
+
+#if ($manyToManyGenerated)
+    const search${D} = this.primaryButtonAction ?
+      this.${entityNameCamelCaseSingular}Service.searchLinks(mergedFilters, pageable) :
+      this.${entityNameCamelCaseSingular}Service.query(mergedFilters, pageable);
+#else
+    const search${D} = this.${entityNameCamelCaseSingular}Service.query(mergedFilters, pageable);
+#end
+
+    search${D}.subscribe(
+      ${entityNameCamelCasePlural} => {
+        this.totalRecords = ${entityNameCamelCasePlural}.totalRecords;
+        this.tableValue = ${entityNameCamelCasePlural}.data;
+        this.searching = false;
+      },
+      error => {
+        this.growlService.showError('Error', error);
+        this.searching = false;
+      }
+    );
+  }
+
+  clearSearch() {
+    this.clearFilters();
+  }
+
+  loadData(event: LazyLoadEvent) {
+    this.search({ pageIndex: event.first / event.rows, pageSize: event.rows, sortField: event.sortField, sortOrder: event.sortOrder });
+  }
+
+  add${entityNamePascalCaseSingular}() {
+    this.add();
+  }
+
+  private getInitialTableStatus() {
+    return {
+      first: 0,
+      rows: environment.rowsPerPage,
+      sortField: null,
+      sortOrder: 1
+    };
+  }
+
+  private loadSearchStatus() {
+    const storedStatus = this.searchService.getStoredStatus('${entityNameCamelCasePlural}');
+    if (storedStatus) {
+      this.filters = Object.assign(this.filters, storedStatus['filters']);
+#if ($dateFound)
+      this.filters = this.searchService.transformDateFilters(this.filters);
+#end
+      this.tableStatus = Object.assign(this.tableStatus, storedStatus['tableStatus']);
+    }
+  }
+
+  private storeSearchStatus() {
+    this.searchService.storeStatus('${entityNameCamelCasePlural}', {
+      filters: this.filters,
+      tableStatus: {
+        first: this.table.first,
+        rows: this.table.rows,
+        sortField: this.table.sortField,
+        sortOrder: this.table.sortOrder,
+      },
+    });
+  }
+}

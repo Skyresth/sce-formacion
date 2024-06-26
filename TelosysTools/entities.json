@@ -1,0 +1,12 @@
+{
+  "alumno": {
+    "menuIconClass": "fa fa-graduation-cap"
+  },
+  "curso": {
+    "menuIconClass": "fa fa-book"
+  },
+  "tipoDocumento": {
+    "menuFolder": "Administración",
+    "writePermission": "admin"
+  }
+}

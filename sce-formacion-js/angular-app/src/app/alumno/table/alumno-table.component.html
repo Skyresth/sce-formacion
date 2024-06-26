@@ -1,0 +1,138 @@
+<div class="form-row">
+  <h3 class="box-title">{{ name }}</h3>
+
+  <div class="box-top-actions" *ngIf="add">
+    <a class="btn btn-success has-icon" (click)="addAlumno()">
+      <i class="fa fa-plus"></i>
+      Añadir
+    </a>
+  </div>
+</div>
+
+<p-accordion>
+  <p-accordionTab header="Filtros de Búsqueda" [selected]="expandFilters">
+    <form name="form" class="form-horizontal">
+      <fieldset>
+        <div class="form-row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="codigo" class="col-md-2 ">Nombre</label>
+              <div class="col-md-10">
+                <input type="text" class="form-control" id="nombre" name="nombre" [(ngModel)]="filters.nombre.value" [disabled]="getFilterDisabledStatus(fixedFilters.nombre)">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="codigo" class="col-md-2 ">Apellido1</label>
+              <div class="col-md-10">
+                <input type="text" class="form-control" id="apellido1" name="apellido1" [(ngModel)]="filters.apellido1.value" [disabled]="getFilterDisabledStatus(fixedFilters.apellido1)">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="codigo" class="col-md-2 ">Apellido2</label>
+              <div class="col-md-10">
+                <input type="text" class="form-control" id="apellido2" name="apellido2" [(ngModel)]="filters.apellido2.value" [disabled]="getFilterDisabledStatus(fixedFilters.apellido2)">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="tipoDocumento" class="col-md-2 ">Tipo documento</label>
+              <div class="col-md-10">
+                <p-dropdown name="tiposDocumento" [options]="selectItemsTiposDocumento" [(ngModel)]="filters.idTipoDocumento.value" [disabled]="getFilterDisabledStatus(fixedFilters.idTipoDocumento)"></p-dropdown>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="codigo" class="col-md-2 ">Numero documento</label>
+              <div class="col-md-10">
+                <input type="text" class="form-control" id="numeroDocumento" name="numeroDocumento" [(ngModel)]="filters.numeroDocumento.value" [disabled]="getFilterDisabledStatus(fixedFilters.numeroDocumento)">
+              </div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="codigo" class="col-md-2 ">Fecha nacimiento</label>
+              <div class="col-md-10">
+                <p-calendar [locale]="calendarLocale.es" dateFormat="dd/mm/yy" inputStyleClass="form-control" id="fechaNacimiento" name="fechaNacimiento" [(ngModel)]="filters.fechaNacimiento.value" [disabled]="getFilterDisabledStatus(fixedFilters.fechaNacimiento)"></p-calendar>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col-md-6">
+            <div class="form-group">
+              <label for="codigo" class="col-md-2 ">Observaciones</label>
+              <div class="col-md-10">
+                <input type="text" class="form-control" id="observaciones" name="observaciones" [(ngModel)]="filters.observaciones.value" [disabled]="getFilterDisabledStatus(fixedFilters.observaciones)">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="col-12 text-right">
+            <button type="button" class="btn btn-danger has-icon" (click)="clearSearch(); tt.reset()">
+              <i class="fa fa-close"></i>
+              Limpiar filtro
+            </button>
+            <button type="submit" class="btn btn-primary has-icon" (click)="tt.reset()" [disabled]="searching">
+              <i class="fa" [ngClass]="{'fa-spinner fa-spin': searching, 'fa-search': !searching}"></i>
+              Buscar
+            </button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </p-accordionTab>
+</p-accordion>
+
+<div class="form-row mt-5 mt-lg-3">
+  <h3 class="box-title" *ngIf="showResultsLabel">Resultados</h3>
+
+  <div class="data-table-container data-table-clickable">
+    <p-table #tt [value]="tableValue"
+      [paginator]="true" [pageLinks]="3" [rowsPerPageOptions]="rowsPerPageOptions"
+      [first]="tableStatus.first" [rows]="tableStatus.rows" [totalRecords]="totalRecords"
+      [sortField]="tableStatus.sortField" [sortOrder]="tableStatus.sortOrder"
+      [lazy]="true" (onLazyLoad)="loadData($event)" [loading]="searching"
+      [responsive]="true">
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngFor="let col of cols" [pSortableColumn]="col.field">
+            {{col.header}}
+            <p-sortIcon [field]="col.field"></p-sortIcon>
+          </th>
+          <th *ngIf="primaryButtonAction">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <ng-container *ngFor="let col of cols">
+            <td (click)="clickAction(row)" *ngIf="col.link">{{ row[col.field][col.link] }}</td>
+            <td (click)="clickAction(row)" *ngIf="col.date">{{ row[col.field] | date:'dd/MM/yyyy' }}</td>
+            <td (click)="clickAction(row)" *ngIf="!col.link && !col.date">{{ row[col.field] }}</td>
+          </ng-container>
+          <td *ngIf="primaryButtonAction">
+            <button type="button" class="btn btn-primary has-icon" (click)="primaryButtonAction(row)">
+              <i class="fa fa-{{ primaryButtonClass }}"></i>
+              {{ primaryButtonText }}
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="primaryButtonAction ? cols.length + 1 : cols.length">No records found</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

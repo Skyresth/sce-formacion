@@ -1,0 +1,83 @@
+#parse("comun.vm")
+#set($generateOneToMany = false)
+package org.gobcan.sce.apps.${NOMBRE_CORTO_AREA}.${NOMBRE_CORTO_PROYECTO}.data.dto;
+
+#if ($generateOneToMany)
+#* *##set($importSource = $entity)
+#else
+#* *##set($importSource = $entity.attributes)
+#end
+#foreach($import in $java.imports($importSource))
+import $import;
+#end
+
+public class ${entityNamePascalCaseSingular}Dto {
+## Todos los atributos menos los identificadores de claves ajenas
+#foreach($attribute in $entity.attributes)
+#* *##set($attributeType = ${attribute.type})
+#* *##if (${attribute.name} == 'version')
+#*      *##set($attributeType = 'int')
+#* *##end
+    private ${attributeType} ${attribute.name};
+#end
+## Entidaded de claves ajenas
+#set($targetEntityGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany())
+#*      *##if ($generateOneToMany)
+## Entity Plural: databaseCatalog = nombre de la entidad en Pascal Case plural
+#*           *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*           *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*           *##set($targetEntityType =  "List<${link.targetEntity.name}Dto>")
+#*           *##set($targetEntityGenerated = true)
+    private ${targetEntityType} ${targetEntityNameCamelCasePlural};
+#*      *##end
+#* *##elseif ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityGenerated = true)
+    private ${link.fieldType}Dto ${link.fieldName};
+#* *##end
+#end
+## Todos los get/set de atributos que no sean identificadores de claves ajenas
+#foreach($attribute in $entity.attributes)
+#* *##set($attributeType = ${attribute.type})
+#* *##if (${attribute.name} == 'version')
+#*      *##set($attributeType = 'int')
+#* *##end
+
+    public ${attributeType} get${fn.capitalize($attribute.name)}() {
+        return ${attribute.name};
+    }
+
+    public void set${fn.capitalize($attribute.name)}(${attributeType} ${attribute.name}) {
+        this.${attribute.name} = ${attribute.name};
+    }
+#end
+## Entidaded de claves ajenas
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityOneToMany())
+#*      *##if ($generateOneToMany)
+## Entity Plural: databaseCatalog = nombre de la entidad en Pascal Case plural
+#*           *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*           *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+#*           *##set($targetEntityType =  "List<${link.targetEntity.name}Dto>")
+
+    public ${targetEntityType} get${targetEntityNamePascalCasePlural}() {
+        return ${targetEntityNameCamelCasePlural};
+    }
+
+    public void set${targetEntityNamePascalCasePlural}(${targetEntityType} ${targetEntityNameCamelCasePlural}) {
+        this.${targetEntityNameCamelCasePlural} = ${targetEntityNameCamelCasePlural};
+    }
+#*      *##end
+#* *##elseif ($link.isCardinalityManyToOne())
+
+    public ${link.fieldType}Dto get${link.fieldType}() {
+        return ${link.fieldName};
+    }
+
+    public void set${link.fieldType}(${link.fieldType}Dto ${link.fieldName}) {
+        this.${link.fieldName} = ${link.fieldName};
+    }
+#* *##end
+#end
+}

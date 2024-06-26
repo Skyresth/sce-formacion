@@ -1,0 +1,172 @@
+#parse("comun.vm")
+#set($manyToManyGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToMany())
+#*      *##set($manyToManyGenerated = true)
+#* *##end
+#end
+import { HttpClient } from '@angular/common/http';
+import { Inject, Injectable } from '@angular/core';
+import {
+  Filters,
+#if ($manyToManyGenerated)
+  FilterService,
+#end
+  HttpResponseHandler,
+  Pageable,
+  QueryService,
+  ResponseBody,
+  ResponseList,
+} from 'angular-sce-commons';
+import { catchError, map } from 'rxjs/operators';
+
+import { BASE_PATH } from '../app.constants';
+
+import { ${entityNamePascalCaseSingular} } from './${entityNameLowerCaseSingular}';
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToMany())
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patrón: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*      *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*      *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*      *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+## Ahora buscamos la entidad que se usa para realizar la asociación
+#*      *##set ($joinTableEntity = '')
+#*      *##foreach ($currentEntity in $selectedEntities)
+#*           *##if ($currentEntity.databaseTable == $joinTableName)
+#*                *##set ($joinTableEntity = $currentEntity)
+#*                *##break
+#*           *##end
+#*      *##end
+#*      *##set($joinTableEntityNamePascalCaseSingular = $joinTableEntity.name)
+#*      *##set($joinTableEntityNameCamelCaseSingular = $fn.uncapitalize($joinTableEntityNamePascalCaseSingular))
+#*      *##set($joinTableEntityNameLowerCaseSingular = $fn.toLowerCase($joinTableEntityNamePascalCaseSingular))
+import { $joinTableEntityNamePascalCaseSingular } from '../$joinTableEntityNameLowerCaseSingular';
+#* *##end
+#end
+
+@Injectable()
+export class ${entityNamePascalCaseSingular}Service extends HttpResponseHandler {
+  private baseApiUrl: string;
+  private ${entityNameCamelCasePlural}Url: string;
+
+  constructor(
+    private http: HttpClient,
+    @Inject(BASE_PATH) basePath: string,
+#if ($manyToManyGenerated)
+    private filterService: FilterService,
+#end
+    private queryService: QueryService,
+  ) {
+    super();
+    this.baseApiUrl = `${D}{basePath}api/v1.0`;
+    this.${entityNameCamelCasePlural}Url = `${D}{this.baseApiUrl}/${entityNameHyphenatedPlural}`;
+  }
+
+  query(filters?: Filters, pageable?: Pageable) {
+    const options = { params: this.queryService.buildQueryParams(filters, pageable) };
+
+    return this.http.get<ResponseBody<ResponseList<${entityNamePascalCaseSingular}>>>(this.${entityNameCamelCasePlural}Url, options).pipe(
+      map(body => body.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  get${entityNamePascalCaseSingular}(${entity.keyAttributes.get(0).name}: number | string) {
+    const url = `${D}{this.${entityNameCamelCasePlural}Url}/${D}{$entity.keyAttributes.get(0).name}`;
+
+    return this.http.get<ResponseBody<${entityNamePascalCaseSingular}>>(url).pipe(
+      map(body => body.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  save(${entityNameCamelCaseSingular}: ${entityNamePascalCaseSingular}) {
+    if (${entityNameCamelCaseSingular}.${entity.keyAttributes.get(0).name}) {
+      return this.put(${entityNameCamelCaseSingular});
+    }
+
+    return this.post(${entityNameCamelCaseSingular});
+  }
+
+  delete(${keyAttribute.name}: number) {
+    const url = `${D}{this.${entityNameCamelCasePlural}Url}/${D}{${keyAttribute.name}}`;
+
+    return this.http.delete<any>(url).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  private post($entityNameCamelCaseSingular: ${entityNamePascalCaseSingular}) {
+    return this.http.post<ResponseBody<${entityNamePascalCaseSingular}>>(this.${entityNameCamelCasePlural}Url, $entityNameCamelCaseSingular).pipe(
+      map(body => body.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  private put($entityNameCamelCaseSingular: ${entityNamePascalCaseSingular}) {
+    const url = `${D}{this.${entityNameCamelCasePlural}Url}/${D}{$entityNameCamelCaseSingular.${entity.keyAttributes.get(0).name}}`;
+
+    return this.http.put<ResponseBody<${entityNamePascalCaseSingular}>>(url, $entityNameCamelCaseSingular).pipe(
+      map(body => body.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToMany())
+## Esto es un parche, el campo link.joinTableName no funciona por fallo de Telosys
+## El id del elemento tiene este patrón: <PREFIJO>.<JOIN_TABLE_NAME>_I
+#*      *##set($linkIdNoPreffix = $link.id.split("\.").get(1))
+#*      *##set($joinTableNameLength = $linkIdNoPreffix.length() - 2)
+#*      *##set($joinTableName = $linkIdNoPreffix.substring(0, $joinTableNameLength))
+## Ahora buscamos la entidad que se usa para realizar la asociación
+#*      *##set ($joinTableEntity = '')
+#*      *##foreach ($currentEntity in $selectedEntities)
+#*           *##if ($currentEntity.databaseTable == $joinTableName)
+#*                *##set ($joinTableEntity = $currentEntity)
+#*                *##break
+#*           *##end
+#*      *##end
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityNameCamelCaseSingular = $fn.uncapitalize($targetEntityNamePascalCaseSingular))
+## Entity Plural: databaseCatalog = nombre de la entidad en Pascal Case plural
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = $fn.uncapitalize($targetEntityNamePascalCasePlural))
+#*      *##set($targetEntityKeyAttribute = $link.targetEntity.keyAttributes.get(0))
+#*      *##set($joinTableEntityNamePascalCaseSingular = $joinTableEntity.name)
+#*      *##set($joinTableEntityNameCamelCaseSingular = $fn.uncapitalize($joinTableEntityNamePascalCaseSingular))
+#*      *##set($joinTableEntityNameLowerCaseSingular = $fn.toLowerCase($joinTableEntityNamePascalCaseSingular))
+  save${joinTableEntityNamePascalCaseSingular}(${keyAttribute.name}: number, ${targetEntityKeyAttribute.name}: number) {
+    const url = `${D}{this.${entityNameCamelCasePlural}Url}/${D}{${keyAttribute.name}}/${targetEntityNameCamelCasePlural}/${D}{${targetEntityKeyAttribute.name}}`;
+
+    return this.http.post<ResponseBody<${joinTableEntityNamePascalCaseSingular}>>(url, null).pipe(
+      map(body => body.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+
+  delete${joinTableEntityNamePascalCaseSingular}(${keyAttribute.name}: number, ${targetEntityKeyAttribute.name}: number) {
+    const url = `${D}{this.${entityNameCamelCasePlural}Url}/${D}{${keyAttribute.name}}/${targetEntityNameCamelCasePlural}/${D}{${targetEntityKeyAttribute.name}}`;
+
+    return this.http.delete<any>(url).pipe(
+      catchError(err => this.handleError(err))
+    );
+  }
+
+#* *##end
+#end
+#if ($manyToManyGenerated)
+
+  searchLinks(filters?: Filters, pageable?: Pageable) {
+    const url = `${D}{this.${entityNameCamelCasePlural}Url}/search-links`;
+
+    const options = { params: this.filterService.buildSearchParams(filters, pageable) };
+
+    return this.http.get<ResponseBody<ResponseList<${entityNamePascalCaseSingular}>>>(url, options).pipe(
+      map(body => body.data),
+      catchError(err => this.handleError(err))
+    );
+  }
+#end
+}

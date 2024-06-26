@@ -1,0 +1,76 @@
+<div class="form-row">
+  <h3 class="box-title">{{ name }}</h3>
+
+  <div class="box-top-actions" *ngIf="add">
+    <a class="btn btn-success has-icon" (click)="addAlumnoCurso()">
+      <i class="fa fa-plus"></i>
+      Añadir
+    </a>
+  </div>
+</div>
+
+<p-accordion>
+  <p-accordionTab header="Filtros de Búsqueda" [selected]="expandFilters">
+    <form name="form" class="form-horizontal">
+      <fieldset>
+        <div>
+        </div>
+        <div class="box-bottom">
+          <div class="box-bottom-actions offset-sm-6">
+            <button type="button" class="btn btn-danger has-icon" (click)="clearSearch(); tt.reset()">
+              <i class="fa fa-close"></i>
+              Limpiar filtro
+            </button>
+            <button type="submit" class="btn btn-primary has-icon" (click)="tt.reset()" [disabled]="searching">
+              <i class="fa" [ngClass]="{'fa-spinner fa-spin': searching, 'fa-search': !searching}"></i>
+              Buscar
+            </button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </p-accordionTab>
+</p-accordion>
+
+<div class="form-row">
+  <h3 class="box-title" *ngIf="showResultsLabel">Resultados</h3>
+
+  <div class="data-table-container data-table-clickable">
+    <p-table #tt [value]="tableValue"
+      [paginator]="true" [pageLinks]="3" [rowsPerPageOptions]="rowsPerPageOptions"
+      [first]="tableStatus.first" [rows]="tableStatus.rows" [totalRecords]="totalRecords"
+      [sortField]="tableStatus.sortField" [sortOrder]="tableStatus.sortOrder"
+      [lazy]="true" (onLazyLoad)="loadData($event)" [loading]="searching"
+      [responsive]="true">
+      <ng-template pTemplate="header">
+        <tr>
+          <th *ngFor="let col of cols" [pSortableColumn]="col.field">
+            {{col.header}}
+            <p-sortIcon [field]="col.field"></p-sortIcon>
+          </th>
+          <th *ngIf="primaryButtonAction">Acciones</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <ng-container *ngFor="let col of cols">
+            <td (click)="clickAction(row)" *ngIf="col.link">{{ row[col.field][col.link] }}</td>
+            <td (click)="clickAction(row)" *ngIf="col.date">{{ row[col.field] | date:'dd/MM/yyyy' }}</td>
+            <td (click)="clickAction(row)" *ngIf="!col.link && !col.date">{{ row[col.field] }}</td>
+          </ng-container>
+          <td *ngIf="primaryButtonAction">
+            <button type="button" class="btn btn-xs btn-primary has-icon" (click)="primaryButtonAction(row)">
+              <i class="fa fa-{{ primaryButtonClass }}"></i>
+              {{ primaryButtonText }}
+            </button>
+          </td>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="emptymessage">
+        <tr>
+          <td [attr.colspan]="primaryButtonAction ? cols.length + 1 : cols.length">No records found</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </div>
+</div>

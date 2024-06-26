@@ -1,0 +1,99 @@
+#set($sceVelocityTools = $loader.loadClass("SceVelocityTools"))
+import { Injectable } from '@angular/core';
+import { SceMenuItem } from 'angular-sce-commons';
+
+import { environment } from '../../environments/environment';
+
+@Injectable()
+export class MainMenuService {
+  getItems() {
+    const permissionSecured = environment.routeGuards.permissionGuard;
+    const items: SceMenuItem[] = [
+#set($usedMenuFolders = [])
+#foreach($entity in $selectedEntities)
+## Si es entidad asociativa, no la mostramos
+#* *##set($isAssociativeEntity = true)
+#* *##foreach($attribute in $entity.nonKeyAttributes)
+#*      *##if (!$attribute.isUsedInForeignKey() && $attribute.name != 'version')
+#*           *##set($isAssociativeEntity = false)
+#*      *##end
+#* *##end
+#* *##if (!$isAssociativeEntity)
+#*      *##set($entityNamePascalCaseSingular = $entity.name)
+#*      *##set($entityNameCamelCaseSingular = $fn.uncapitalize($entityNamePascalCaseSingular))
+#*      *##set($menuFolder = $sceVelocityTools.getEntityVariable($project.locationFullPath, $entityNameCamelCaseSingular, 'menuFolder'))
+#*      *##if ($menuFolder == '')
+#*           *##set($entityNamePascalCasePlural = $entity.databaseCatalog)
+#*           *##set($entityNameHyphenatedPlural = ${sceVelocityTools.pascalCaseToHyphenated($entityNamePascalCasePlural)})
+#*           *##set($menuClass = $sceVelocityTools.getEntityVariable($project.locationFullPath, $entityNameCamelCaseSingular, 'menuIconClass'))
+      {
+        label: '$entityNamePascalCasePlural',
+#*           *##if ($menuClass != '')
+        icon: '$menuClass',
+#*           *##end
+        routerLink: ['/$entityNameHyphenatedPlural'],
+        permissions: permissionSecured ? [environment.prefijoPermisos + '${entityNamePascalCaseSingular}List'] : null,
+        items: [
+          {
+            label: 'Buscar',
+            routerLink: ['/$entityNameHyphenatedPlural'],
+            permissions: permissionSecured ? [environment.prefijoPermisos + '${entityNamePascalCaseSingular}List'] : null,
+          },
+          {
+            label: 'Crear',
+            routerLink: ['/$entityNameHyphenatedPlural/new'],
+            permissions: permissionSecured ? [environment.prefijoPermisos + '${entityNamePascalCaseSingular}Detail'] : null,
+          },
+        ],
+      },
+#*      *##elseif (!$usedMenuFolders.contains($menuFolder))
+## Menu Folder
+#*           *##set($foo = $usedMenuFolders.add($menuFolder))
+      {
+        label: '$menuFolder',
+        items: [
+#*           *##set($permissionList = '')
+#*           *##set($profileList = '')
+#*           *##foreach($entity2 in $selectedEntities)
+## for each entity in the folder
+#*                *##set($entityNamePascalCaseSingular2 = $entity2.name)
+#*                *##set($entityNameCamelCaseSingular2 = $fn.uncapitalize($entityNamePascalCaseSingular2))
+#*                *##set($menuFolder2 = $sceVelocityTools.getEntityVariable($project.locationFullPath, $entityNameCamelCaseSingular2, 'menuFolder'))
+#*                *##if ($menuFolder == $menuFolder2)
+#*                     *##set($entityNamePascalCasePlural2 = $entity2.databaseCatalog)
+#*                     *##set($entityNameHyphenatedPlural2 = ${sceVelocityTools.pascalCaseToHyphenated($entityNamePascalCasePlural2)})
+#*                     *##set($targetEntityLabel2 = ${sceVelocityTools.getLabelFromName($entityNamePascalCasePlural2)})
+          {
+            label: '$targetEntityLabel2',
+#*                     *##set($menuClass2 = $sceVelocityTools.getEntityVariable($project.locationFullPath, $entityNameCamelCaseSingular2, 'menuIconClass'))
+#*                     *##if ($menuClass2 != '')
+            icon: '$menuClass2',
+#*                     *##end
+            routerLink: ['/$entityNameHyphenatedPlural2'],
+            permissions: permissionSecured ? [environment.prefijoPermisos + '${entityNamePascalCaseSingular2}List'] : null,
+#*                     *##if ($permissionList == '')
+#*                          *##set($permissionList = "environment.prefijoPermisos + '${entityNamePascalCaseSingular2}List'")
+#*                     *##else
+#*                          *##set($permissionList = "$permissionList, environment.prefijoPermisos + '${entityNamePascalCaseSingular2}List'")
+#*                     *##end
+#*                     *##set($writePermissionProfile = $sceVelocityTools.getEntityVariable($project.locationFullPath, $entityNameCamelCaseSingular2, 'writePermission'))
+#*                     *##if ($profileList == '')
+#*                          *##set($profileList = "environment.perfil$fn.capitalize($writePermissionProfile)")
+#*                     *##else
+#*                          *##set($profileList = "$permissionList, environment.perfil$fn.capitalize($writePermissionProfile)")
+#*                     *##end
+          },
+#*                *##end## if
+#*           *##end## foreach
+        ],
+        permissions: permissionSecured ? [$permissionList] : null,
+        profiles: [$profileList],
+      },
+#*      *##end## if
+#* *##end## if
+#end## foreach
+    ];
+
+    return items;
+  }
+}

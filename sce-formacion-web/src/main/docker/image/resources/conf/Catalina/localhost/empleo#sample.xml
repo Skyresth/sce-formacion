@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+
+<Context>
+        <Environment name="appName" value="base" type="java.lang.String" override="true"/>
+</Context>

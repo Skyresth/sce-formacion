@@ -1,0 +1,25 @@
+#parse("comun.vm")
+#set($entityNamePascalCaseSingular = $entity.name)
+#set($targetEntityGenerated = false)
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+#*      *##set($targetEntityLowerCaseSingular = ${fn.toLowerCase($targetEntityNamePascalCaseSingular)})
+#*      *##set($targetEntityGenerated = true)
+import { ${targetEntityNamePascalCaseSingular} } from '../${targetEntityLowerCaseSingular}';
+#* *##end
+#end
+#if ($targetEntityGenerated)
+
+#end
+export class ${entityNamePascalCaseSingular} {
+#foreach($attribute in $entity.attributes)
+  $attribute.name: #getAngularType($attribute.type);
+#end
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCaseSingular = ${link.targetEntity.name})
+  ${link.fieldName}: ${targetEntityNamePascalCaseSingular} = null;
+#* *##end
+#end
+}

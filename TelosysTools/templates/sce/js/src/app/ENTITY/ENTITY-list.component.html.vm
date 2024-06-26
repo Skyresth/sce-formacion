@@ -1,0 +1,12 @@
+#parse("comun.vm")
+<div class="box">
+  <app-${entityNameLowerCaseSingular}-table ##
+#foreach($link in $entity.selectedLinks)
+#* *##if ($link.isCardinalityManyToOne())
+#*      *##set($targetEntityNamePascalCasePlural = $link.targetEntity.databaseCatalog)
+#*      *##set($targetEntityNameCamelCasePlural = ${fn.uncapitalize($targetEntityNamePascalCasePlural)})
+[${targetEntityNameCamelCasePlural}]="${targetEntityNameCamelCasePlural}" ##
+#* *##end
+#end
+[clickAction]="goToDetail" [add]="add" [expandFilters]="true" name="${sceVelocityTools.getLabelFromName($entityNamePascalCasePlural)}" [showResultsLabel]="true"></app-${entityNameLowerCaseSingular}-table>
+</div>

@@ -1,0 +1,36 @@
+## Classes
+#set($sceVelocityTools = $loader.loadClass("SceVelocityTools"))
+## Entity Singular
+#set($entityNamePascalCaseSingular = $entity.name)
+#set($entityNameCamelCaseSingular = $fn.uncapitalize($entityNamePascalCaseSingular))
+#set($entityNameLowerCaseSingular = $fn.toLowerCase($entityNamePascalCaseSingular))
+## Entity Plural: databaseCatalog = nombre de la entidad en Pascal Case plural
+#set($entityNamePascalCasePlural = $entity.databaseCatalog)
+#set($entityNameCamelCasePlural = ${fn.uncapitalize($entityNamePascalCasePlural)})
+#set($entityNameHyphenatedPlural = ${sceVelocityTools.pascalCaseToHyphenated($entityNamePascalCasePlural)})
+## Clave primaria
+#set($keyAttribute = $entity.keyAttributes.get(0))
+## Para poder escribir '$' en los ficheros
+#set($D = '$')
+## Variables de proyecto
+#set($nombreCortoProyectoMayusculas = $fn.toUpperCase($NOMBRE_CORTO_PROYECTO))
+## Macros
+#macro(getAngularType $tipoJava)
+#if ($tipoJava == 'Integer' || $tipoJava == 'Long' || $tipoJava == 'Double')
+number#elseif ($tipoJava == 'Date')
+$tipoJava#else
+$fn.uncapitalize($tipoJava)#end
+#end
+#macro(firstNonKeyStringAttributeName $entity2)
+#* *##set($found = false)
+#* *##foreach($attribute in $entity2.nonKeyAttributes)
+#*     *##if ($attribute.type == 'String')
+#*         *##set($found = true)
+#*         *#$attribute.name#*
+       *##break
+#*     *##end
+#* *##end
+#* *##if (!$found)
+#*     *#${entity2.keyAttributes.get(0).name}.toString()#*
+#* *##end
+#end

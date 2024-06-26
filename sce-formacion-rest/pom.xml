@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.gobcan.sce.apps.form.formacion</groupId>
+		<artifactId>sce-formacion</artifactId>
+		<version>0.0.1-SNAPSHOT</version>
+	</parent>
+
+	<artifactId>sce-formacion-rest</artifactId>
+	<packaging>jar</packaging>
+	<name>sce-formacion :: REST</name>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<timestamp>${maven.build.timestamp}</timestamp>
+		<maven.build.timestamp.format>dd-MM-yyyy HH:mm</maven.build.timestamp.format>
+		<versionCliente>${project.version}</versionCliente>
+		<build.date>${timestamp}</build.date>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>org.gobcan.sce.apps.form.formacion</groupId>
+			<artifactId>sce-formacion-core</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.gobcan.sce.libs.commons.multi</groupId>
+			<artifactId>sce-jersey</artifactId>
+			<version>7.16.0</version>
+		</dependency>
+		<!-- Spring -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-jersey</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>ldapsdk</groupId>
+			<artifactId>ldapsdk</artifactId>
+			<version>4.1</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>1.8</source>
+					<target>1.8</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>properties-maven-plugin</artifactId>
+				<version>1.0.0</version>
+				<executions>
+					<execution>
+						<phase>initialize</phase>
+						<goals>
+							<goal>write-project-properties</goal>
+						</goals>
+						<configuration>
+							<outputFile>${project.build.outputDirectory}/mavenproject.properties</outputFile>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>ch.acanda.maven</groupId>
+				<artifactId>spring-banner-plugin</artifactId>
+				<version>1.0</version>
+				<executions>
+					<execution>
+						<id>generate-spring-banner</id>
+						<phase>generate-resources</phase>
+						<goals>
+							<goal>generate</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<text>Formacion</text>
+					<outputDirectory>${project.build.outputDirectory}</outputDirectory>
+					<filename>banner.txt</filename>
+					<includeInfo>true</includeInfo>
+					<info>Version: ${project.version} - Spring-Boot: ${project.parent.parent.version}</info>
+					<color>red</color>
+				</configuration>
+			</plugin>
+		</plugins>
+		<pluginManagement>
+			<plugins>
+				<!--This plugin's configuration is used to store Eclipse m2e settings 
+					only. It has no influence on the Maven build itself. -->
+				<plugin>
+					<groupId>org.eclipse.m2e</groupId>
+					<artifactId>lifecycle-mapping</artifactId>
+					<version>1.0.0</version>
+					<configuration>
+						<lifecycleMappingMetadata>
+							<pluginExecutions>
+								<pluginExecution>
+									<pluginExecutionFilter>
+										<groupId>
+											ch.acanda.maven
+										</groupId>
+										<artifactId>
+											spring-banner-plugin
+										</artifactId>
+										<versionRange>
+											[1.0,)
+										</versionRange>
+										<goals>
+											<goal>generate</goal>
+										</goals>
+									</pluginExecutionFilter>
+									<action>
+										<ignore></ignore>
+									</action>
+								</pluginExecution>
+							</pluginExecutions>
+						</lifecycleMappingMetadata>
+					</configuration>
+				</plugin>
+			</plugins>
+		</pluginManagement>
+	</build>
+</project>
